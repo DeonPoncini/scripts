@@ -1,0 +1,37 @@
+#!/usr/bin/python
+
+# usage: parse-manifest manifest-file output-dir repo-root
+
+import codecs
+import sys
+from xml.dom import minidom
+
+if len(sys.argv) < 4:
+    print "Usage: " + sys.argv[0] + " /path/to/manifest.xml /output/path/ /repo/root"
+    sys.exit(-1)
+
+manifestFile = sys.argv[1]
+outputClone = sys.argv[2]
+projectroot = sys.argv[3]
+
+outputClone = codecs.open(sys.argv[2] + "/clone.sh", 'w', 'utf-8')
+
+manifestDom = minidom.parse(manifestFile)
+remoteList = manifestDom.getElementsByTagName('remote')
+
+remotes = {} # dictionary mapping name to fetch
+for r in remoteList:
+    remotes[r.attributes['name'].value] = r.attributes['fetch'].value
+
+
+projectList = manifestDom.getElementsByTagName('project')
+
+outputClone.write("#!/bin/bash\n")
+outputClone.write("source " + projectroot + "/scripts/include/common.sh\n")
+for p in projectList:
+    r = p.attributes['remote'].value
+    n = p.attributes['name'].value
+    o = p.attributes['path'].value
+    outputClone.write("clone_or_pull " + projectroot + " " + o + " " +\
+            remotes[r] + n + "\n")
+

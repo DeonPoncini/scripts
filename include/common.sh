@@ -98,3 +98,31 @@ function folder_at_depth {
     IFS=$saveIFS
     echo "${parts[$2]}"
 }
+
+###############################################################################
+# Make directory
+# $1 : directory to make
+###############################################################################
+function make_dir {
+    if [ ! -d "$1" ]; then
+        mkdir -p "$1"
+    fi
+}
+
+###############################################################################
+# Clone a repo, or update if it already exists
+# $1 existing pathdir above the repo
+# $2 name of the repository
+# $3 git clone address
+###############################################################################
+function clone_or_pull {
+    if [ ! -d ${1}/${2} ] ; then
+        pushd ${1} >> /dev/null
+        git clone ${3} ${2}
+        popd >> /dev/null
+    else
+        pushd ${1}/${2} >> /dev/null
+        git pull
+        popd >> /dev/null
+    fi
+}
