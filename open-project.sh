@@ -6,15 +6,6 @@ if [ -z ${PROJECT_NAME} ] ; then
     return
 fi
 
-# check the user settings are set
-source ${SCRIPT_PATH}/user/user-check.sh
-check_user_vars
-if [ $? != 0 ] ; then
-    echo "User setup not complete"
-    return
-fi
-
-
 echo "Opening project ${PROJECT_NAME}"
 
 # Get script path
@@ -22,6 +13,14 @@ SCRIPT_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # set up the root for all projects
 export PROJECT_ROOT=$(dirname ${SCRIPT_PATH})
+
+# check the user settings are set
+source ${SCRIPT_PATH}/user/user-check.sh
+check_user_vars
+if [ $? != 0 ] ; then
+    echo "User setup not complete"
+    return
+fi
 
 # find out how deep the project root is
 PROJECT_ROOT_DEPTH=$(path_depth $PROJECT_ROOT)
