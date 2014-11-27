@@ -13,6 +13,7 @@
 # PROJECT_ROOT: the top level workspace path
 # PROJECT_ARTIFACT_ROOT: path to current projects artifact directory
 # PROJECT_SCRIPT_PATH: path to the scripts directory
+# PROJECT_MANIFEST: name of the project manifest file
 # PROJECT_MANIFEST_PATH: path to the manifest directory
 # PROJECT_MANIFEST_ARTIFACT_PATH: path to manifest artifact directory
 # PROJECT_BUILD_DIR: path to the build directory
@@ -81,7 +82,12 @@ make_dir $PROJECT_DATA_DIR
 make_dir $PROJECT_INSTALL_DIR
 make_dir $PROJECT_SYSTEM_DIR
 
-${SCRIPT_PATH}/bin/parse-manifest ${PROJECT_MANIFEST} ${PROJECT_SYSTEM_DIR} ${PROJECT_ROOT}
+# parse the manifest file and autogenerate scripts
+${SCRIPT_PATH}/bin/parse-manifest
+if [ $? != 0 ] ; then
+    echo "Could not parse manifest for ${PROJECT_NAME}"
+    return
+fi
 
 # setup prompt to show we have sourced the env
 GIT_PROMPT_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh

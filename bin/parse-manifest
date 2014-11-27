@@ -1,25 +1,28 @@
 #!/usr/bin/python
 
 ################################################################################
-# project-vcs.sh
+# parse-manifest
 # Parses the repo manifest for a project and generates code output to execute
 # commands across all repositories, such as git commands
-# argv[1]: path to the project manifest to parse
-# argv[2]: path where all generated files should be written
-# argv[3]: the project workspace root directory
 ################################################################################
 
 import codecs
+import os
 import sys
+
 from xml.dom import minidom
 
-if len(sys.argv) < 4:
-    print "Usage: " + sys.argv[0] + " /path/to/manifest.xml /output/path/ /repo/root"
-    sys.exit(-1)
+projectroot = os.environ['PROJECT_ROOT']
+manifestFile = os.environ['PROJECT_MANIFEST']
+outputPath = os.environ['PROJECT_SYSTEM_DIR']
 
-manifestFile = sys.argv[1]
-outputPath = sys.argv[2]
-projectroot = sys.argv[3]
+# check the environment is set
+if not projectroot:
+    sys.exit(-1)
+if not manifestFile:
+    sys.exit(-1)
+if not outputPath:
+    sys.exit(-1)
 
 outputClone = codecs.open(outputPath + "/clone.sh", 'w', 'utf-8')
 outputGit = codecs.open(outputPath + "/git.sh", 'w', 'utf-8')
