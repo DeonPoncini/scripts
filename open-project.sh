@@ -6,6 +6,15 @@ if [ -z ${PROJECT_NAME} ] ; then
     return
 fi
 
+# check the user settings are set
+source ${SCRIPT_PATH}/user/user-check.sh
+check_user_vars
+if [ $? != 0 ] ; then
+    echo "User setup not complete"
+    return
+fi
+
+
 echo "Opening project ${PROJECT_NAME}"
 
 # Get script path
@@ -17,28 +26,22 @@ export PROJECT_ROOT=$(dirname ${SCRIPT_PATH})
 # find out how deep the project root is
 PROJECT_ROOT_DEPTH=$(path_depth $PROJECT_ROOT)
 
-# git setup
-GIT_USER=deonp
-GIT_SERVER=sectorsoftware.net
-GIT_PATH=~/git.sectorsoftware.net/
-GIT_ARG=${GIT_USER}@${GIT_SERVER}:${GIT_PATH}
-
 # check out the manifest repos to list the projects
 echo "Updating project list..."
-MANIFEST_DIR=${PROJECT_ROOT}/manifest
-if [ ! -d ${MANIFEST_DIR} ] ; then
+MANIFEST_PATH=${PROJECT_ROOT}/${MANIFEST_DIR}
+if [ ! -d ${MANIFEST_PATH} ] ; then
     pushd ${PROJECT_ROOT} >> /dev/null
-    git clone ${GIT_ARG}/manifest.git
+    git clone ${MANIFEST_GIT} ${MANIFEST_DIR}
     popd >> /dev/null
 else
-    pushd ${MANIFEST_DIR} >> /dev/null
+    pushd ${MANIFEST_PATH} >> /dev/null
     git pull
     popd >> /dev/null
 fi
 
 # check if the project name is found inside the manifest directory
 valid_project=false
-for f in `find ${MANIFEST_DIR} -name *.xml` ; do
+for f in `find ${MANIFEST_PATH} -name *.xml` ; do
     pname=$(basename ${f})
     if [ "${PROJECT_NAME}.xml" = "$pname" ] ; then
         valid_project=true
