@@ -59,6 +59,8 @@ make_dir $PROJECT_DATA_DIR
 make_dir $PROJECT_INSTALL_DIR
 make_dir $PROJECT_SYSTEM_DIR
 
+${SCRIPT_PATH}/bin/parse-manifest ${PROJECT_MANIFEST} ${PROJECT_SYSTEM_DIR} ${PROJECT_ROOT}
+
 # setup prompt to show we have sourced the env
 GIT_PROMPT_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
 GIT_PROMPT_LOC=$HOME/.git-prompt.sh
