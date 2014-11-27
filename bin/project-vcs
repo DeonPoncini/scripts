@@ -1,5 +1,11 @@
 #!/bin/bash
 
+################################################################################
+# project-vcs.sh
+# run this to execute git commands across all projects related to the current
+# PROJECT_NAME
+###############################################################################
+
 if [ -z ${PROJECT_ROOT} ] ; then
     echo "Please source open-project.sh"
     exit 1
@@ -27,7 +33,7 @@ function clone {
 
     # check the current commit hash against the stored one
     doreparse=false
-    manifest_file=${MANIFEST_ARTIFACT_ROOT}/manifest.hash
+    manifest_file=${PROJECT_MANIFEST_ARTIFACT_ROOT}/manifest.hash
     if [ ! -e $manifest_file ] ; then
         doreparse=true
         manifest_hash=$(git rev-parse HEAD)

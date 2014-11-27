@@ -1,6 +1,13 @@
 #!/usr/bin/python
 
-# usage: parse-manifest manifest-file output-dir repo-root
+################################################################################
+# project-vcs.sh
+# Parses the repo manifest for a project and generates code output to execute
+# commands across all repositories, such as git commands
+# argv[1]: path to the project manifest to parse
+# argv[2]: path where all generated files should be written
+# argv[3]: the project workspace root directory
+################################################################################
 
 import codecs
 import sys

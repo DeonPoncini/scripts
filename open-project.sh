@@ -1,5 +1,27 @@
 #!/bin/bash
 
+################################################################################
+# open-project.sh
+# source this script to switch the workspace to use the project defined by
+# PROJECT_NAME.
+#
+# The following environment variables are modified:
+# PATH: appends the script/bin directory
+# PS1: the shell prompt is set to [PROJECT_NAME/gitrepo] (gitbranch) $
+#
+# The following environment variables are exported:
+# PROJECT_ROOT: the top level workspace path
+# PROJECT_ARTIFACT_ROOT: path to current projects artifact directory
+# PROJECT_SCRIPT_PATH: path to the scripts directory
+# PROJECT_MANIFEST_PATH: path to the manifest directory
+# PROJECT_MANIFEST_ARTIFACT_PATH: path to manifest artifact directory
+# PROJECT_BUILD_DIR: path to the build directory
+# PROJECT_CODEGEN_DIR: path to the generated code directory
+# PROJECT_DATA_DIR: path to project code directory
+# PROJECT_INSTALL_DIR: path to project install directory
+# PROJECT_SYSTEM_DIR: path to project system directory
+###############################################################################
+
 # check for project name
 if [ -z ${PROJECT_NAME} ] ; then
     echo "PROJECT_NAME not defined, please export PROJECT_NAME"
@@ -7,7 +29,7 @@ if [ -z ${PROJECT_NAME} ] ; then
 fi
 
 # Get script path
-export SCRIPT_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # set up the root for all projects
 export PROJECT_ROOT=$(dirname ${SCRIPT_PATH})
@@ -42,8 +64,8 @@ ARTIFACT_DIR=${PROJECT_ROOT}/_artifact
 export PROJECT_ARTIFACT_ROOT=${ARTIFACT_DIR}/${PROJECT_NAME}
 # store manifest metadata
 export PROJECT_MANIFEST_DIR=${PROJECT_ROOT}/${MANIFEST_DIR}
-export MANIFEST_ARTIFACT_ROOT=${ARTIFACT_DIR}/${MANIFEST_DIR}
-make_dir $MANIFEST_ARTIFACT_ROOT
+export PROJECT_MANIFEST_ARTIFACT_ROOT=${ARTIFACT_DIR}/${MANIFEST_DIR}
+make_dir $PROJECT_MANIFEST_ARTIFACT_ROOT
 
 export PROJECT_SCRIPT_DIR=${SCRIPT_PATH}
 
