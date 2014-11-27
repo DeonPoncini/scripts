@@ -1,0 +1,100 @@
+#!/bin/bash
+
+if [ -z ${PROJECT_ROOT} ] ; then
+    echo "Please source open-project.sh"
+    exit 1
+fi
+
+source ${PROJECT_SCRIPT_DIR}/include/common.sh
+
+VALID_ARGUMENTS="clone|pull|push|status"
+
+###############################################################################
+# print usage
+###############################################################################
+function usage {
+    echo "Usage: project-vcs [$VALID_ARGUMENTS]"
+    exit 1
+}
+
+###############################################################################
+# clone a repository
+###############################################################################
+function clone {
+    # update the manifest directory
+    pushd ${PROJECT_MANIFEST_DIR} >> /dev/null
+    git pull
+
+    # check the current commit hash against the stored one
+    doreparse=false
+    manifest_file=${MANIFEST_ARTIFACT_ROOT}/manifest.hash
+    if [ ! -e $manifest_file ] ; then
+        doreparse=true
+        manifest_hash=$(git rev-parse HEAD)
+        echo $manifest_hash > $manifest_file
+    else
+        manifest_hash=$(git rev-parse HEAD)
+        manifest_old_hash="`cat $manifest_file`"
+        # if the version has changed, generate a new parse file
+        if [ "$manifest_hash" != "$manifest_old_hash" ] ; then
+            echo $manifest_hash > $manifest_file
+            doreparse=true
+        fi
+    fi
+    if [ "$doreparse" = true ] ; then
+        ${SCRIPT_PATH}/bin/parse-manifest ${PROJECT_MANIFEST} ${PROJECT_SYSTEM_DIR} ${PROJECT_ROOT}
+        if [ $? != 0 ] ; then
+            echo "Could not parse manifest for ${PROJECT_NAME}"
+            exit 1
+        fi
+    fi
+    popd >> /dev/null
+    bash ${PROJECT_SYSTEM_DIR}/clone.sh
+}
+
+###############################################################################
+# pull all repositories
+###############################################################################
+function pull {
+    bash ${PROJECT_SYSTEM_DIR}/git.sh "pull"
+}
+
+###############################################################################
+# push all repositories
+# $1 remote
+# $2 branch
+###############################################################################
+function push {
+    bash ${PROJECT_SYSTEM_DIR}/git.sh "push $1 $2"
+}
+
+###############################################################################
+# status all repositories
+###############################################################################
+function status_all {
+    bash ${PROJECT_SYSTEM_DIR}/git.sh "status"
+}
+
+ARGUMENTS=($@)
+case "${ARGUMENTS[0]}" in
+    "clone")
+        clone
+        ;;
+    "pull")
+        pull
+        ;;
+    "push")
+        if [ "${#ARGUMENTS[@]}" -lt "3" ]; then
+            echo "push requires remote and path parameters"
+            exit 1
+        fi
+        push ${ARGUMENTS[1]} ${ARGUMENTS[2]}
+        ;;
+    "status")
+        status_all
+        ;;
+    "*")
+        usage
+        ;;
+esac
+

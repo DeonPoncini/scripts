@@ -111,17 +111,19 @@ function make_dir {
 
 ###############################################################################
 # Clone a repo, or update if it already exists
-# $1 existing pathdir above the repo
-# $2 name of the repository
-# $3 git clone address
+# $1 git clone address
+# $2 existing pathdir above the repo
+# $3 name of the repository
 ###############################################################################
 function clone_or_pull {
-    if [ ! -d ${1}/${2} ] ; then
-        pushd ${1} >> /dev/null
-        git clone ${3} ${2}
+    if [ ! -d ${2}/${3} ] ; then
+        pushd ${2} >> /dev/null
+        echo "Cloning ${3}"
+        git clone ${1} ${3}
         popd >> /dev/null
     else
-        pushd ${1}/${2} >> /dev/null
+        pushd ${2}/${3} >> /dev/null
+        echo "Repository ${3}"
         git pull
         popd >> /dev/null
     fi

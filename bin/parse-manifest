@@ -11,10 +11,11 @@ if len(sys.argv) < 4:
     sys.exit(-1)
 
 manifestFile = sys.argv[1]
-outputClone = sys.argv[2]
+outputPath = sys.argv[2]
 projectroot = sys.argv[3]
 
-outputClone = codecs.open(sys.argv[2] + "/clone.sh", 'w', 'utf-8')
+outputClone = codecs.open(outputPath + "/clone.sh", 'w', 'utf-8')
+outputGit = codecs.open(outputPath + "/git.sh", 'w', 'utf-8')
 
 manifestDom = minidom.parse(manifestFile)
 remoteList = manifestDom.getElementsByTagName('remote')
@@ -28,10 +29,21 @@ projectList = manifestDom.getElementsByTagName('project')
 
 outputClone.write("#!/bin/bash\n")
 outputClone.write("source " + projectroot + "/scripts/include/common.sh\n")
+
+outputGit.write("#!/bin/bash\n")
 for p in projectList:
     r = p.attributes['remote'].value
-    n = p.attributes['name'].value
-    o = p.attributes['path'].value
-    outputClone.write("clone_or_pull " + projectroot + " " + o + " " +\
-            remotes[r] + n + "\n")
+    server_path = p.attributes['name'].value
+    local_path = p.attributes['path'].value
+    # write the clone commands
+    outputClone.write("pushd " + projectroot + " >> /dev/null\n")
+    outputClone.write("clone_or_pull " + remotes[r] + server_path + " " + \
+            projectroot + " " + local_path + "\n");
+    outputClone.write("popd >> /dev/null\n")
+    # for any generic git command other than clone
+    outputGit.write("pushd " + projectroot + "/" + local_path + " >> /dev/null\n")
+    outputGit.write("echo \"Repository: " + local_path + "\"\n")
+    outputGit.write("git $1 \n")
+    outputGit.write("popd >> /dev/null\n")
+    outputGit.write("echo \"\"\n")
 

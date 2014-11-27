@@ -7,11 +7,10 @@ if [ -z ${PROJECT_NAME} ] ; then
 fi
 
 # Get script path
-SCRIPT_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export SCRIPT_PATH="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # set up the root for all projects
 export PROJECT_ROOT=$(dirname ${SCRIPT_PATH})
-export PROJECT_ARTIFACT_ROOT=${PROJECT_ROOT}/_artifact/${PROJECT_NAME}
 
 # check the user settings are set
 source ${SCRIPT_PATH}/include/common.sh
@@ -29,14 +28,24 @@ PROJECT_ROOT_DEPTH=$(path_depth $PROJECT_ROOT)
 
 # check out the manifest repos to list the projects
 echo "Updating project list..."
-clone_or_pull ${PROJECT_ROOT} ${MANIFEST_DIR} ${MANIFEST_GIT}
+clone_or_pull ${MANIFEST_GIT} ${PROJECT_ROOT} ${MANIFEST_DIR}
 
 # check if the project name is found inside the manifest directory
-PROJECT_XML_NAME=${PROJECT_ROOT}/${MANIFEST_DIR}/${PROJECT_NAME}.xml
-if [ ! -e $PROJECT_XML_NAME ] ; then
+export PROJECT_MANIFEST=${PROJECT_ROOT}/${MANIFEST_DIR}/${PROJECT_NAME}.xml
+if [ ! -e $PROJECT_MANIFEST ] ; then
     echo "Project ${PROJECT_NAME} not found"
     return
 fi
+
+# export the common system directories
+ARTIFACT_DIR=${PROJECT_ROOT}/_artifact
+export PROJECT_ARTIFACT_ROOT=${ARTIFACT_DIR}/${PROJECT_NAME}
+# store manifest metadata
+export PROJECT_MANIFEST_DIR=${PROJECT_ROOT}/${MANIFEST_DIR}
+export MANIFEST_ARTIFACT_ROOT=${ARTIFACT_DIR}/${MANIFEST_DIR}
+make_dir $MANIFEST_ARTIFACT_ROOT
+
+export PROJECT_SCRIPT_DIR=${SCRIPT_PATH}
 
 # set the artifact directories
 export PROJECT_BUILD_DIR=${PROJECT_ARTIFACT_ROOT}/build
@@ -49,18 +58,6 @@ make_dir $PROJECT_CODEGEN_DIR
 make_dir $PROJECT_DATA_DIR
 make_dir $PROJECT_INSTALL_DIR
 make_dir $PROJECT_SYSTEM_DIR
-
-# check out all the git repositories in the manifest
-${SCRIPT_PATH}/bin/parse-manifest ${PROJECT_XML_NAME} ${PROJECT_SYSTEM_DIR} ${PROJECT_ROOT}
-if [ $? != 0 ] ; then
-    echo "Could not parse manifest for ${PROJECT_NAME}"
-    return
-fi
-
-# execute the manifest clone
-pushd $PROJECT_ROOT >> /dev/null
-bash ${PROJECT_CODEGEN_DIR}/clone.sh
-popd >> /dev/null
 
 # setup prompt to show we have sourced the env
 GIT_PROMPT_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
