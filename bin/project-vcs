@@ -48,7 +48,7 @@ function clone {
         fi
     fi
     if [ "$doreparse" = true ] ; then
-        ${SCRIPT_PATH}/bin/parse-manifest
+        ${PROJECT_SCRIPT_DIR}/bin/parse-manifest
         if [ $? != 0 ] ; then
             echo "Could not parse manifest for ${PROJECT_NAME}"
             exit 1
