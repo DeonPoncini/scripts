@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# project-vcs.sh
+# project-vcs
 # run this to execute git commands across all projects related to the current
 # PROJECT_NAME
 ###############################################################################
@@ -13,7 +13,7 @@ fi
 
 source ${PROJECT_SCRIPT_DIR}/include/common.sh
 
-VALID_ARGUMENTS="clone|pull|push|status"
+VALID_ARGUMENTS="clone|pull|push|status|help"
 
 ###############################################################################
 # print usage
@@ -98,6 +98,9 @@ case "${ARGUMENTS[0]}" in
         ;;
     "status")
         status_all
+        ;;
+    "help")
+        usage
         ;;
     "*")
         usage

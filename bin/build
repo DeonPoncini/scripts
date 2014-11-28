@@ -1,0 +1,75 @@
+#!/bin/bash
+
+################################################################################
+# build
+################################################################################
+
+if [ -z ${PROJECT_ROOT} ] ; then
+    echo "Please source open-project.sh"
+    exit 1
+fi
+
+source ${PROJECT_SCRIPT_DIR}/include/common.sh
+
+VALID_ARGUMENTS="cmake|clean|help"
+
+################################################################################
+# print usage
+################################################################################
+function usage {
+    echo "Usage: build [$VALID_ARGUMENTS]"
+    exit 1
+}
+
+################################################################################
+# clean
+################################################################################
+function clean {
+    echo "Cleaning build directories..."
+    rm -rf $PROJECT_BUILD_DIR/*
+}
+
+################################################################################
+# build
+################################################################################
+function build {
+
+    # run cmake if we need to
+    if [ ! -e $PROJECT_BUILD_DIR/CMakeCache.txt ] || [ -n "${FORCE_CMAKE}" ] ; then
+        pushd $PROJECT_BUILD_DIR >> /dev/null
+        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS='ON' $PROJECT_SCRIPT_DIR/cmake
+        popd >> /dev/null
+    fi
+
+    # run make
+    pushd $PROJECT_BUILD_DIR >> /dev/null
+    make
+    popd >> /dev/null
+}
+
+# no arguments, just build
+if [ "$#" = "0" ] ; then
+    build
+    exit 0
+fi
+
+FORCE_CMAKE=""
+ARGUMENTS=($@)
+case "${ARGUMENTS[0]}" in
+    "cmake")
+        FORCE_CMAKE="FORCE_CMAKE"
+        build
+        ;;
+    "clean")
+        clean
+        ;;
+    "status")
+        status_all
+        ;;
+    "help")
+        usage
+        ;;
+    "*")
+        usage
+        ;;
+esac

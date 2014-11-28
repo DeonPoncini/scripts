@@ -12,7 +12,7 @@
 # The following environment variables are exported:
 # PROJECT_ROOT: the top level workspace path
 # PROJECT_ARTIFACT_ROOT: path to current projects artifact directory
-# PROJECT_SCRIPT_PATH: path to the scripts directory
+# PROJECT_SCRIPT_DIR: path to the scripts directory
 # PROJECT_MANIFEST: name of the project manifest file
 # PROJECT_MANIFEST_PATH: path to the manifest directory
 # PROJECT_MANIFEST_ARTIFACT_PATH: path to manifest artifact directory

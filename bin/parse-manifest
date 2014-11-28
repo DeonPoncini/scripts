@@ -15,6 +15,7 @@ from xml.dom import minidom
 projectroot = os.environ['PROJECT_ROOT']
 manifestFile = os.environ['PROJECT_MANIFEST']
 outputPath = os.environ['PROJECT_SYSTEM_DIR']
+buildPath = os.environ['PROJECT_BUILD_DIR']
 
 # check the environment is set
 if not projectroot:
@@ -26,6 +27,7 @@ if not outputPath:
 
 outputClone = codecs.open(outputPath + "/clone.sh", 'w', 'utf-8')
 outputGit = codecs.open(outputPath + "/git.sh", 'w', 'utf-8')
+outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
 
 manifestDom = minidom.parse(manifestFile)
 remoteList = manifestDom.getElementsByTagName('remote')
@@ -39,8 +41,8 @@ projectList = manifestDom.getElementsByTagName('project')
 
 outputClone.write("#!/bin/bash\n")
 outputClone.write("source " + projectroot + "/scripts/include/common.sh\n")
-
 outputGit.write("#!/bin/bash\n")
+outputCmake.write("cmake_minimum_required(VERSION 2.8)\n")
 for p in projectList:
     r = p.attributes['remote'].value
     server_path = p.attributes['name'].value
@@ -56,4 +58,7 @@ for p in projectList:
     outputGit.write("git $1 \n")
     outputGit.write("popd >> /dev/null\n")
     outputGit.write("echo \"\"\n")
+    # add subdirectories for cmake
+    outputCmake.write("add_subdirectory(" + projectroot + "/" + local_path + \
+            " " + buildPath + "/" + local_path + ")\n");
 
