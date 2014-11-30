@@ -1,5 +1,26 @@
 include(CMakeParseArguments)
 
+###############################################################################
+# Function to install a projects contents, export its artifacts to be used by
+# other downstream CMake projects.
+#
+# Listed contents are installed to CMAKE_INSTALL_PREFIX/{lib|bin|include}
+# Generated <name>Config.cmake installed to CMAKE_PREFIX_PATH/lib/cmake
+#
+# Usage:
+# function(NAME VERSION INCLUDES LIBS ARCHIVES BINS)
+# NAME: single string value indicating the project name, should match the value
+#       given to the project() command in the CMakeLists.txt
+# VERSION: single string value in x.y.z format
+# INCLUDES: list of absolute paths to include directories
+# LIBS: list of target names, same values as the target named in
+#       add_library(name SHARED)
+# ARCHIVES: list of target names, same values as the target named in
+#       add_library(name STATIC)
+# BINS: list of target names, same values as the target named in
+#       add_executable
+#
+###############################################################################
 function(export_project)
     set(options )
     set(oneValueArgs NAME VERSION)
