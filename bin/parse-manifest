@@ -14,7 +14,7 @@ from xml.dom import minidom
 
 projectroot = os.environ['PROJECT_ROOT']
 manifestFile = os.environ['PROJECT_MANIFEST']
-outputPath = os.environ['PROJECT_SYSTEM_DIR']
+outputPath = os.environ['PROJECT_CODEGEN_DIR']
 buildPath = os.environ['PROJECT_BUILD_DIR']
 
 # check the environment is set

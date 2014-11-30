@@ -27,6 +27,7 @@ function usage {
 function clean {
     echo "Cleaning build directories..."
     rm -rf $PROJECT_BUILD_DIR/*
+    rm -rf $PROJECT_SYSTEM_DIR/*
 }
 
 ################################################################################
@@ -43,7 +44,7 @@ function build {
 
     # run make
     pushd $PROJECT_BUILD_DIR >> /dev/null
-    make
+    make install
     popd >> /dev/null
 }
 

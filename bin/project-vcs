@@ -55,14 +55,14 @@ function clone {
         fi
     fi
     popd >> /dev/null
-    bash ${PROJECT_SYSTEM_DIR}/clone.sh
+    bash ${PROJECT_CODEGEN_DIR}/clone.sh
 }
 
 ###############################################################################
 # pull all repositories
 ###############################################################################
 function pull {
-    bash ${PROJECT_SYSTEM_DIR}/git.sh "pull"
+    bash ${PROJECT_CODEGEN_DIR}/git.sh "pull"
 }
 
 ###############################################################################
@@ -71,14 +71,14 @@ function pull {
 # $2 branch
 ###############################################################################
 function push {
-    bash ${PROJECT_SYSTEM_DIR}/git.sh "push $1 $2"
+    bash ${PROJECT_CODEGEN_DIR}/git.sh "push $1 $2"
 }
 
 ###############################################################################
 # status all repositories
 ###############################################################################
 function status_all {
-    bash ${PROJECT_SYSTEM_DIR}/git.sh "status"
+    bash ${PROJECT_CODEGEN_DIR}/git.sh "status"
 }
 
 ARGUMENTS=($@)

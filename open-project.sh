@@ -18,7 +18,6 @@
 # PROJECT_MANIFEST_ARTIFACT_PATH: path to manifest artifact directory
 # PROJECT_BUILD_DIR: path to the build directory
 # PROJECT_CODEGEN_DIR: path to the generated code directory
-# PROJECT_DATA_DIR: path to project code directory
 # PROJECT_INSTALL_DIR: path to project install directory
 # PROJECT_SYSTEM_DIR: path to project system directory
 ###############################################################################
@@ -73,12 +72,10 @@ export PROJECT_SCRIPT_DIR=${SCRIPT_PATH}
 # set the artifact directories
 export PROJECT_BUILD_DIR=${PROJECT_ARTIFACT_ROOT}/build
 export PROJECT_CODEGEN_DIR=${PROJECT_ARTIFACT_ROOT}/codegen
-export PROJECT_DATA_DIR=${PROJECT_ARTIFACT_ROOT}/data
 export PROJECT_INSTALL_DIR=${PROJECT_ARTIFACT_ROOT}/install
 export PROJECT_SYSTEM_DIR=${PROJECT_ARTIFACT_ROOT}/system
 make_dir $PROJECT_BUILD_DIR
 make_dir $PROJECT_CODEGEN_DIR
-make_dir $PROJECT_DATA_DIR
 make_dir $PROJECT_INSTALL_DIR
 make_dir $PROJECT_SYSTEM_DIR
 
