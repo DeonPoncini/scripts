@@ -176,11 +176,34 @@ libd and projectB would be updated. If we then
 
 liba, libb, libc and projectA would be updated only.
 
+It is useful that downstream binaries can easily include upstream libraries
+that are being compiled in at the same time. To support this, there is a useful
+export\_project macro that can be added to each project. This will
+export and install the project in the install directory along with exposing
+the include directories, libraries, binaries and archives to any projects that
+wish to use them. Project exconfig is the project that uses this system.
+
+Building is a simple process once all this is set up, simply type build, which
+compiles all the projects in the project and installs their output in
+\_artifact/name/install.
+
 Building
 --------
 
+    mkdir project_root
+    cd project_root
+    export PROJECT_NAME=<name>
+    touch scripts/user/user.sh
+    echo '#!/bin/bash' >> scripts/user/user.sh
+    echo 'export MANIFEST_GIT="user@gitpath.com/manifest.git"' >> scripts/user/user.sh
+    echo 'export MANIFEST_DIR="manifest"' >> scripts/user/user.sh
+    source scripts/open-project.sh
+    project-vcs clone
+    build
+
 Usage
 -----
+See build help and project-vcs help
 
 License
 -------
