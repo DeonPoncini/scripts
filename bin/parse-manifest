@@ -49,7 +49,7 @@ for p in projectList:
     local_path = p.attributes['path'].value
     # write the clone commands
     outputClone.write("pushd " + projectroot + " >> /dev/null\n")
-    outputClone.write("clone_or_pull " + remotes[r] + server_path + " " + \
+    outputClone.write("clone_or_pull " + remotes[r] + "/" + server_path + " " + \
             projectroot + " " + local_path + "\n");
     outputClone.write("popd >> /dev/null\n")
     # for any generic git command other than clone
