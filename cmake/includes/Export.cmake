@@ -128,8 +128,9 @@ function(export_project)
     )
 
     # export all targets
+    message(STATUS "Exporting: ${export_targets}")
     export(TARGETS ${export_targets}
-        FILE "${export_file}"
+        APPEND FILE "${export_file}"
     )
 
     install(EXPORT ${EXP_NAME}Targets
