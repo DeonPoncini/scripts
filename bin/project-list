@@ -1,0 +1,27 @@
+#!/bin/bash
+
+################################################################################
+# project-list
+# run this to list all projects available to open
+###############################################################################
+
+# we can't assume we are in the environment yet, so we need to setup
+
+# Get script path
+SCRIPT_PATH="$(dirname $( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd ))"
+
+# set up the root for all projects
+export PROJECT_ROOT=$(dirname ${SCRIPT_PATH})
+
+source ${SCRIPT_PATH}/user/user-check.sh
+check_user_vars
+if [ $? != 0 ] ; then
+    echo "User setup not complete"
+    exit 1
+fi
+
+# list the manifest setup
+for f in $PROJECT_ROOT/$MANIFEST_DIR/*.xml
+do
+    echo $(basename ${f%.*})
+done
