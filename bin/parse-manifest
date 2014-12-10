@@ -17,7 +17,6 @@ from xml.dom import minidom
 # figure out what packages depend on what others
 def dependencies(projectroot, projectlist):
     dependmap = {}
-    print projectlist
     for p in projectlist:
         makelist = codecs.open(projectroot + "/" + str(p) + "/CMakeLists.txt", \
                 'r', 'utf-8').read()
