@@ -1,0 +1,105 @@
+#!/usr/bin/python
+
+################################################################################
+# order-deps
+# parses the repo manifest and determines the packaging order through a
+# topological sort of the find_package modules listed in each cmake file
+################################################################################
+
+import codecs
+import copy
+import os
+import re
+import sys
+
+from xml.dom import minidom
+
+# figure out what packages depend on what others
+def dependencies(projectroot, projectlist):
+    dependmap = {}
+    for p in projectlist:
+        makelist = codecs.open(projectroot + "/" + str(p) + "/CMakeLists.txt", \
+                'r', 'utf-8').read()
+        dependmap[p] = []
+        # dependent packages are listed
+        # find_package<whitespace>(<whitespace>[NAME]<whitespace|)>)
+        pattern = re.compile(r"find_package\s*\(\s*?(.*?)[\s)]")
+        for match in re.findall(pattern, makelist):
+            dependmap[p].append(match)
+    # strip out dependencies that aren't in the project list
+    dependcopy = copy.deepcopy(dependmap)
+    for k, v in dependcopy.items():
+        for v1 in v:
+            if not v1 in projectlist:
+                dependmap[k].remove(v1)
+    return dependmap
+
+def toposort(dependmap):
+    # set of nodes with no incoming edges on the graph
+    # this means no dependencies
+    tailnodes = []
+    for k,v in dependmap.items():
+        if len(v) == 0:
+            # no dependencies
+            tailnodes.append(k)
+
+    # the final sorted list
+    sortedlist = []
+    while len(tailnodes) > 0:
+        # take a non dependent node out and put it on our sorted list
+        currentnode = str(tailnodes.pop())
+        sortedlist.append(currentnode)
+        # find all the elements that depend on the current node
+        dependants = []
+        for k, v in dependmap.items():
+            for v1 in v:
+                if v1 == currentnode:
+                    dependants.append(k)
+        # for each dependant:
+        for d in dependants:
+            # remove this dependency
+            dependmap[d].remove(currentnode)
+            # if we are empty, we are sorted
+            if len(dependmap[d]) == 0:
+                tailnodes.append(d)
+
+    return sortedlist
+
+projectroot = os.environ['PROJECT_ROOT']
+manifestFile = os.environ['PROJECT_MANIFEST']
+outputPath = os.environ['PROJECT_CODEGEN_DIR']
+buildPath = os.environ['PROJECT_BUILD_DIR']
+
+# check the environment is set
+if not projectroot:
+    sys.exit(-1)
+if not manifestFile:
+    sys.exit(-1)
+if not outputPath:
+    sys.exit(-1)
+
+outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
+
+manifestDom = minidom.parse(manifestFile)
+remoteList = manifestDom.getElementsByTagName('remote')
+
+remotes = {} # dictionary mapping name to fetch
+for r in remoteList:
+    remotes[r.attributes['name'].value] = r.attributes['fetch'].value
+
+projectList = manifestDom.getElementsByTagName('project')
+
+# put the projects into a list
+outputCmake.write("cmake_minimum_required(VERSION 2.8)\n")
+cmakeSubDirList = []
+for p in projectList:
+    # add subdirectories for cmake
+    cmakeSubDirList.append(p.attributes['path'].value)
+
+# we need to topologically sort our dependency graph for cmake
+# this ensures the add_subdirectories are done the right way
+deps = dependencies(projectroot, cmakeSubDirList)
+sortedlist = toposort(deps)
+for p in sortedlist:
+    outputCmake.write("add_subdirectory(" + projectroot + "/" + p + \
+            " " + buildPath + "/" + p + ")\n");
