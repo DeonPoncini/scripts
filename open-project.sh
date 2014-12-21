@@ -115,4 +115,13 @@ if [[ :$PATH: != *:"${SCRIPT_PATH}/bin":* ]] ; then
     export PATH=${SCRIPT_PATH}/bin:${PATH}
 fi
 
+if [[ :$PATH: != *:"${PROJECT_INSTALL_DIR}/bin":* ]] ; then
+    export PATH=${PROJECT_INSTALL_DIR}/bin:${PATH}
+fi
+
+# setup the LD_LIBRARY_PATH
+if [[ :$LD_LIBRARY_PATH: != *:"${PROJECT_INSTALL_DIR}/lib":* ]] ; then
+    export LD_LIBRARY_PATH=${PROJECT_INSTALL_DIR}/lib:${LD_LIBRARY_PATH}
+fi
+
 echo "Project $PROJECT_NAME successfully opened"
