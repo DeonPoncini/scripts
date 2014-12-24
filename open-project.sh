@@ -86,16 +86,6 @@ if [ $? != 0 ] ; then
     return
 fi
 
-# clone or update all the repositories
-${SCRIPT_PATH}/bin/project-vcs clone
-
-# order the dependencies of the project manifest
-${SCRIPT_PATH}/bin/order-deps
-if [ $? != 0 ] ; then
-    echo "Could not order dependencies for ${PROJECT_NAME}"
-    return
-fi
-
 # setup prompt to show we have sourced the env
 GIT_PROMPT_URL=https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
 GIT_PROMPT_LOC=$HOME/.git-prompt.sh

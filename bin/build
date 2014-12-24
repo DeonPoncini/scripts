@@ -50,6 +50,10 @@ function build {
     local cmake_options=$2
     local force_cmake=$3
 
+    # order the dependencies of the project manifest
+    ${PROJECT_SCRIPT_DIR}/bin/order-deps
+    check_error $? "dependency ordering failed, aborting..."
+
     # run cmake if we need to
     if [ ! -e ${build_dir}/CMakeCache.txt ] || [ -n "${force_cmake}" ] ; then
         pushd ${build_dir} >> /dev/null
