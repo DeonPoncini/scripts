@@ -100,18 +100,4 @@ then echo \"/\$(folder_at_depth \$(folder_at_depth \$(pwd) \$PROJECT_ROOT_DEPTH)
 fi"
 export PS1="\[$GREEN\][$PROJECT_NAME\[$LIGHT_BLUE\]\`${SELECT}\`\[$GREEN\]]\[$CYAN\]\$(__git_ps1)\[$LIGHT_GREEN\]$ \[$RESET_COLOR\]"
 
-# setup the path
-if [[ :$PATH: != *:"${SCRIPT_PATH}/bin":* ]] ; then
-    export PATH=${SCRIPT_PATH}/bin:${PATH}
-fi
-
-if [[ :$PATH: != *:"${PROJECT_INSTALL_DIR}/bin":* ]] ; then
-    export PATH=${PROJECT_INSTALL_DIR}/bin:${PATH}
-fi
-
-# setup the LD_LIBRARY_PATH
-if [[ :$LD_LIBRARY_PATH: != *:"${PROJECT_INSTALL_DIR}/lib":* ]] ; then
-    export LD_LIBRARY_PATH=${PROJECT_INSTALL_DIR}/lib:${LD_LIBRARY_PATH}
-fi
-
 echo "Project $PROJECT_NAME successfully opened"

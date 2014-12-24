@@ -31,15 +31,6 @@ function usage {
 }
 
 ################################################################################
-# clean
-################################################################################
-function clean {
-    echo "Cleaning build directories..."
-    rm -rf $PROJECT_BUILD_DIR/*
-    rm -rf $PROJECT_SYSTEM_DIR/*
-}
-
-################################################################################
 # build
 # $1 build directory
 # $2 cmake options
@@ -160,6 +151,7 @@ for b in "${BUILD_BUILDS[@]}" ; do
             echo " UNINSTALLING $t [$b]"
             echo "****************************"
             rm -rf $INSTALL_PATH
+            continue
         fi
 
         echo "****************************"
