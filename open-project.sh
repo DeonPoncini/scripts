@@ -101,3 +101,8 @@ fi"
 export PS1="\[$GREEN\][$PROJECT_NAME\[$LIGHT_BLUE\]\`${SELECT}\`\[$GREEN\]]\[$CYAN\]\$(__git_ps1)\[$LIGHT_GREEN\]$ \[$RESET_COLOR\]"
 
 echo "Project $PROJECT_NAME successfully opened"
+
+# add the script tools into the path
+if [[ :$PATH: != *:"${SCRIPT_PATH}/bin":* ]] ; then
+    export PATH=${SCRIPT_PATH}/bin:${PATH}
+fi
