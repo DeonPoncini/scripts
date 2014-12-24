@@ -27,6 +27,7 @@ if not manifestFile:
 if not outputPath:
     sys.exit(-1)
 
+outputList = codecs.open(outputPath + "/list", 'w', 'utf-8')
 outputClone = codecs.open(outputPath + "/clone.sh", 'w', 'utf-8')
 outputGit = codecs.open(outputPath + "/git.sh", 'w', 'utf-8')
 
@@ -59,4 +60,6 @@ for p in projectList:
     outputGit.write("git $1 \n")
     outputGit.write("popd >> /dev/null\n")
     outputGit.write("echo \"\"\n")
+    # write out the project names in a list
+    outputList.write(local_path + "\n")
 

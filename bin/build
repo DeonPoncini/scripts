@@ -14,19 +14,28 @@ source ${PROJECT_SCRIPT_DIR}/include/common.sh
 VALID_OPTIONS="cmake|clean|uninstall|help"
 VALID_TARGETS="linux-64"
 VALID_BUILDS="debug|release"
+VALID_PROJECTS="all"
 
 DEFAULT_TARGET="linux-64"
 DEFAULT_BUILD="debug"
+DEFAULT_PROJECT="all"
+
+# read up the valid projects
+while read line
+do
+    VALID_PROJECTS="${VALID_PROJECTS}|${line}"
+done < ${PROJECT_CODEGEN_DIR}/list
 
 IFS='|' read -a ARRAY_OPTIONS <<< "$VALID_OPTIONS"
 IFS='|' read -a ARRAY_TARGETS <<< "$VALID_TARGETS"
 IFS='|' read -a ARRAY_BUILDS <<< "$VALID_BUILDS"
+IFS='|' read -a ARRAY_PROJECTS <<< "$VALID_PROJECTS"
 
 ################################################################################
 # print usage
 ################################################################################
 function usage {
-    echo "Usage: build [-t $VALID_TARGETS] [-b $VALID_BUILDS] [$VALID_OPTIONS]"
+    echo "Usage: build [-t $VALID_TARGETS] [-b $VALID_BUILDS] [-p $VALID_PROJECTS] [$VALID_OPTIONS]"
     exit 1
 }
 
@@ -34,12 +43,14 @@ function usage {
 # build
 # $1 build directory
 # $2 cmake options
-# $3 force cmake
+# $3 cmake projects
+# $4 force cmake
 ################################################################################
 function build {
     local build_dir=$1
     local cmake_options=$2
-    local force_cmake=$3
+    local cmake_projects=$3
+    local force_cmake=$4
 
     # order the dependencies of the project manifest
     ${PROJECT_SCRIPT_DIR}/bin/order-deps
@@ -53,7 +64,24 @@ function build {
         popd >> /dev/null
     fi
 
-    # run make
+    if [ "$cmake_projects" = "all" ] ; then
+        echo "making all"
+        pushd ${build_dir}
+        make -j8
+        check_error $? "make failed, aborting..."
+        popd
+    else
+        IFS=' ' read -a cmake_projects <<< "${cmake_projects}"
+        for p in "${cmake_projects[@]}" ; do
+            echo "making ${p}"
+            pushd ${build_dir}
+            make -j8 ${p}
+            check_error $? "make ${p} failed, aborting..."
+            popd
+        done
+    fi
+
+    # run make install
     pushd ${build_dir} >> /dev/null
     make install
     check_error $? "make install failed, aborting..."
@@ -65,13 +93,17 @@ function build {
 ################################################################################
 BUILD_TARGETS=""
 BUILD_BUILDS=""
-while getopts ":t:b:" o; do
+BUILD_PROJECTS=""
+while getopts ":t:b:p:" o; do
     case "${o}" in
         t)
-            BUILD_TARGETS="${BUILD_TARGET}${OPTARG},"
+            BUILD_TARGETS="${BUILD_TARGETS}${OPTARG},"
             ;;
         b)
-            BUILD_BUILDS="${BUILD_TARGET}${OPTARG},"
+            BUILD_BUILDS="${BUILD_BUILDS}${OPTARG},"
+            ;;
+        p)
+            BUILD_PROJECTS="${BUILD_PROJECTS}${OPTARG},"
             ;;
         *)
             usage
@@ -89,9 +121,14 @@ if [ "${BUILD_BUILDS}" = "" ] ; then
     BUILD_BUILDS=$DEFAULT_BUILD
 fi
 
+if [ "${BUILD_PROJECTS}" = "" ] ; then
+    BUILD_PROJECTS=$DEFAULT_PROJECT
+fi
+
 # convert comma separated options into arrays
 IFS=',' read -a BUILD_TARGETS <<< "${BUILD_TARGETS%,}"
 IFS=',' read -a BUILD_BUILDS <<< "${BUILD_BUILDS%,}"
+IFS=',' read -a BUILD_PROJECTS <<< "${BUILD_PROJECTS%,}"
 
 # validate
 for t in "${BUILD_TARGETS[@]}" ; do
@@ -104,6 +141,13 @@ done
 for b in "${BUILD_BUILDS[@]}" ; do
     if [ $(list_contains $b ${ARRAY_BUILDS[@]}) = false ] ; then
         echo "Invalid build $b"
+        usage
+    fi
+done
+
+for p in "${BUILD_PROJECTS[@]}" ; do
+    if [ $(list_contains $p ${ARRAY_PROJECTS[@]}) = false ] ; then
+        echo "Invalid project $p"
         usage
     fi
 done
@@ -140,7 +184,6 @@ for b in "${BUILD_BUILDS[@]}" ; do
             echo "****************************"
             echo " CLEANING $t [$b]"
             echo "****************************"
-            echo $BUILD_PATH
             rm -rf $BUILD_PATH
             rm -rf $SYSTEM_PATH
             continue
@@ -164,10 +207,19 @@ for b in "${BUILD_BUILDS[@]}" ; do
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=${b^}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_PATH=${BUILD_PATH}"
 
+        CMAKE_PROJECTS=""
+        if [ $(list_contains "all" ${BUILD_PROJECTS[@]}) = false ] ; then
+            for b in ${BUILD_PROJECTS[@]} ; do
+                CMAKE_PROJECTS="${CMAKE_PROJECTS} ${b}"
+            done
+        else
+            CMAKE_PROJECTS="all"
+        fi
+
         make_dir $BUILD_PATH
         make_dir $SYSTEM_PATH
         make_dir $INSTALL_PATH
 
-        build "${BUILD_PATH}" "${CMAKE_OPTIONS}" "${FORCE_CMAKE}"
+        build "${BUILD_PATH}" "${CMAKE_OPTIONS}" "${CMAKE_PROJECTS}" "${FORCE_CMAKE}"
     done
 done
