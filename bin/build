@@ -11,13 +11,22 @@ fi
 
 source ${PROJECT_SCRIPT_DIR}/include/common.sh
 
-VALID_ARGUMENTS="cmake|clean|help"
+VALID_OPTIONS="cmake|clean|uninstall|help"
+VALID_TARGETS="linux-64"
+VALID_BUILDS="debug|release"
+
+DEFAULT_TARGET="linux-64"
+DEFAULT_BUILD="debug"
+
+IFS='|' read -a ARRAY_OPTIONS <<< "$VALID_OPTIONS"
+IFS='|' read -a ARRAY_TARGETS <<< "$VALID_TARGETS"
+IFS='|' read -a ARRAY_BUILDS <<< "$VALID_BUILDS"
 
 ################################################################################
 # print usage
 ################################################################################
 function usage {
-    echo "Usage: build [$VALID_ARGUMENTS]"
+    echo "Usage: build [-t $VALID_TARGETS] [-b $VALID_BUILDS] [$VALID_OPTIONS]"
     exit 1
 }
 
@@ -32,45 +41,137 @@ function clean {
 
 ################################################################################
 # build
+# $1 build directory
+# $2 cmake options
+# $3 force cmake
 ################################################################################
 function build {
+    local build_dir=$1
+    local cmake_options=$2
+    local force_cmake=$3
 
     # run cmake if we need to
-    if [ ! -e $PROJECT_BUILD_DIR/CMakeCache.txt ] || [ -n "${FORCE_CMAKE}" ] ; then
-        pushd $PROJECT_BUILD_DIR >> /dev/null
-        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS='ON' $PROJECT_SCRIPT_DIR/cmake
+    if [ ! -e ${build_dir}/CMakeCache.txt ] || [ -n "${force_cmake}" ] ; then
+        pushd ${build_dir} >> /dev/null
+        cmake -DCMAKE_EXPORT_COMPILE_COMMANDS='ON' ${cmake_options} $PROJECT_SCRIPT_DIR/cmake
+        check_error $? "cmake failed, aborting..."
         popd >> /dev/null
     fi
 
     # run make
-    pushd $PROJECT_BUILD_DIR >> /dev/null
+    pushd ${build_dir} >> /dev/null
     make install
+    check_error $? "make install failed, aborting..."
     popd >> /dev/null
 }
 
-# no arguments, just build
-if [ "$#" = "0" ] ; then
-    build
-    exit 0
+################################################################################
+# argument parsing
+################################################################################
+BUILD_TARGETS=""
+BUILD_BUILDS=""
+while getopts ":t:b:" o; do
+    case "${o}" in
+        t)
+            BUILD_TARGETS="${BUILD_TARGET}${OPTARG},"
+            ;;
+        b)
+            BUILD_BUILDS="${BUILD_TARGET}${OPTARG},"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+# set the defaults if not set
+if [ "${BUILD_TARGETS}" = "" ] ; then
+    BUILD_TARGETS=$DEFAULT_TARGET
 fi
 
-FORCE_CMAKE=""
-ARGUMENTS=($@)
-case "${ARGUMENTS[0]}" in
-    "cmake")
-        FORCE_CMAKE="FORCE_CMAKE"
-        build
-        ;;
-    "clean")
-        clean
-        ;;
-    "status")
-        status_all
-        ;;
-    "help")
+if [ "${BUILD_BUILDS}" = "" ] ; then
+    BUILD_BUILDS=$DEFAULT_BUILD
+fi
+
+# convert comma separated options into arrays
+IFS=',' read -a BUILD_TARGETS <<< "${BUILD_TARGETS%,}"
+IFS=',' read -a BUILD_BUILDS <<< "${BUILD_BUILDS%,}"
+
+# validate
+for t in "${BUILD_TARGETS[@]}" ; do
+    if [ $(list_contains $t ${ARRAY_TARGETS[@]}) = false ] ; then
+        echo "Invalid target $t"
         usage
-        ;;
-    "*")
+    fi
+done
+
+for b in "${BUILD_BUILDS[@]}" ; do
+    if [ $(list_contains $b ${ARRAY_BUILDS[@]}) = false ] ; then
+        echo "Invalid build $b"
         usage
-        ;;
-esac
+    fi
+done
+
+################################################################################
+# options
+################################################################################
+IFS=' ' read -a BUILD_OPTIONS <<< "$(parse_params $@)"
+
+for o in "${BUILD_OPTIONS[@]}" ; do
+    if [ $(list_contains $o ${ARRAY_OPTIONS[@]}) = false ] ; then
+        echo "Invalid option $o"
+        usage
+    fi
+done
+
+# operate on options
+if [ $(list_contains help ${BUILD_OPTIONS[@]}) = true ] ; then
+    usage
+fi
+
+FORCE_CMAKE=$(list_contains cmake ${BUILD_OPTIONS[@]})
+
+# build each build type for each target
+for b in "${BUILD_BUILDS[@]}" ; do
+    # for each target
+    for t in "${BUILD_TARGETS}" ;  do
+
+        BUILD_PATH=$PROJECT_BUILD_DIR/${b}/${t}
+        INSTALL_PATH=$PROJECT_INSTALL_DIR/${b}/${t}
+        SYSTEM_PATH=${PROJECT_SYSTEM_DIR}/${b}/${t}
+
+        if [ $(list_contains clean ${BUILD_OPTIONS[@]}) = true ] ; then
+            echo "****************************"
+            echo " CLEANING $t [$b]"
+            echo "****************************"
+            echo $BUILD_PATH
+            rm -rf $BUILD_PATH
+            rm -rf $SYSTEM_PATH
+            continue
+        fi
+
+        if [ $(list_contains uninstall ${BUILD_OPTIONS[@]}) = true ] ; then
+            echo "****************************"
+            echo " UNINSTALLING $t [$b]"
+            echo "****************************"
+            rm -rf $INSTALL_PATH
+        fi
+
+        echo "****************************"
+        echo " BUILDING $t [$b]"
+        echo "****************************"
+
+        # setup the cmake options
+        CMAKE_OPTIONS="-DCMAKE_PREFIX_PATH=${SYSTEM_PATH}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=${b^}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_PATH=${BUILD_PATH}"
+
+        make_dir $BUILD_PATH
+        make_dir $SYSTEM_PATH
+        make_dir $INSTALL_PATH
+
+        build "${BUILD_PATH}" "${CMAKE_OPTIONS}" "${FORCE_CMAKE}"
+    done
+done

@@ -68,7 +68,6 @@ def toposort(dependmap):
 projectroot = os.environ['PROJECT_ROOT']
 manifestFile = os.environ['PROJECT_MANIFEST']
 outputPath = os.environ['PROJECT_CODEGEN_DIR']
-buildPath = os.environ['PROJECT_BUILD_DIR']
 
 # check the environment is set
 if not projectroot:
@@ -102,4 +101,4 @@ deps = dependencies(projectroot, cmakeSubDirList)
 sortedlist = toposort(deps)
 for p in sortedlist:
     outputCmake.write("add_subdirectory(" + projectroot + "/" + p + \
-            " " + buildPath + "/" + p + ")\n");
+            " ${BUILD_PATH}/" + p + ")\n")

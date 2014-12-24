@@ -128,3 +128,42 @@ function clone_or_pull {
         popd >> /dev/null
     fi
 }
+
+###############################################################################
+# Parse a parameter list, skipping options
+# $1 : parameter list
+# Usage:
+#   IFS=' ' read -a PARAMS <<< "$(parse_params $@)"
+###############################################################################
+function parse_params {
+    list=($@)
+    PARAMS=""
+    for p in "${list[@]}" ; do
+        case "${p}" in
+            -) shift;; # skip over opts
+            *) PARAMS="${PARAMS} ${p}";;
+        esac
+    done
+    echo "${PARAMS}"
+}
+
+###############################################################################
+# Check if a list contains an item
+# $1 : item
+# $2 : list
+# Usage
+#   if [[ $(list_contains value ${LIST}) = true ]] ; then
+#       # ${LIST} contains "value"
+#   fi
+###############################################################################
+function list_contains {
+    item=$1 && shift
+    list=($@)
+    for i in "${list[@]}" ; do
+        if [ $i = $item ] ; then
+            echo true
+            return
+        fi
+    done
+    echo false
+}
