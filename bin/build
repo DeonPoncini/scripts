@@ -66,18 +66,18 @@ function build {
 
     if [ "$cmake_projects" = "all" ] ; then
         echo "making all"
-        pushd ${build_dir}
+        pushd ${build_dir} >> /dev/null
         make -j8
         check_error $? "make failed, aborting..."
-        popd
+        popd >> /dev/null
     else
         IFS=' ' read -a cmake_projects <<< "${cmake_projects}"
         for p in "${cmake_projects[@]}" ; do
             echo "making ${p}"
-            pushd ${build_dir}
+            pushd ${build_dir} >> /dev/null
             make -j8 ${p}
             check_error $? "make ${p} failed, aborting..."
-            popd
+            popd >> /dev/null
         done
     fi
 
@@ -201,11 +201,15 @@ for b in "${BUILD_BUILDS[@]}" ; do
         echo " BUILDING $t [$b]"
         echo "****************************"
 
+        # get the toolchain file
+        TOOLCHAIN="${PROJECT_SCRIPT_DIR}/cmake/toolchains/${t}-toolchain.cmake"
+
         # setup the cmake options
         CMAKE_OPTIONS="-DCMAKE_PREFIX_PATH=${SYSTEM_PATH}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=${b^}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_PATH=${BUILD_PATH}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}"
 
         CMAKE_PROJECTS=""
         if [ $(list_contains "all" ${BUILD_PROJECTS[@]}) = false ] ; then
