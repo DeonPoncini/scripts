@@ -75,6 +75,20 @@ function download {
 }
 
 ###############################################################################
+# Download a file only if it doesn't exist already
+# $1 : source URI
+# $2 : destination path
+###############################################################################
+function download_if_not_exists {
+    if [ -e $2 ]; then
+        echo "Skipping download of $2, file exists"
+    else
+        echo "Downloading $2"
+        download $1 $2
+    fi
+}
+
+###############################################################################
 # How many folders deep is a path
 # $1 : path to test
 ###############################################################################
@@ -167,3 +181,31 @@ function list_contains {
     done
     echo false
 }
+
+###############################################################################
+# Extract an archive
+# $1 : file to extract
+# $2 : directory to extract it to
+###############################################################################
+function extract {
+    # if this is a .tar.gz
+    if regexp_match "\.tar\.gz$|\.tgz$" "$1"; then
+        tar xzf "$1" -C "$2" --totals
+        check_error $? "extract of $1 failed, aborting..."
+
+    # if this is a .tar.bz2
+    elif regexp_match "\.tar\.bz2$" "$1"; then
+        tar xjf "$1" -C "$2" --totals
+        check_error $? "extract of $1 failed, aborting..."
+
+    # if this is a .zip
+    elif regexp_match "\.zip$" "$1"; then
+        unzip -o "$1" -d "$2"
+        check_error $? "extract of $1 failed, aborting..."
+
+    else
+        echo "$1 is not a known archive type, aborting..."
+        exit 1
+    fi
+}
+

@@ -20,6 +20,11 @@
 # PROJECT_CODEGEN_DIR: path to the generated code directory
 # PROJECT_INSTALL_DIR: path to project install directory
 # PROJECT_SYSTEM_DIR: path to project system directory
+# PROJECT_SYSROOT_DIR: path to the sysroot where toolchains live
+# PROJECT_SYSROOT_BUILD_DIR: path to the sysroot where external deps are built
+# PROJECT_SYSROOT_STAGING_DIR: path to the where external deps are downloaded
+# PROJECT_SYSROOT_RELEASE_DIR: path to the where external deps are installed
+# PROJECT_SYSROOT_TOOLCHAIN_DIR: path to the external toolchains
 ###############################################################################
 
 # check for project name
@@ -58,6 +63,17 @@ if [ ! -e $PROJECT_MANIFEST ] ; then
     echo "Project ${PROJECT_NAME} not found"
     return
 fi
+
+# check to create the sysroot directories for cross compilation
+export PROJECT_SYSROOT_DIR=$HOME/.sysroot/
+export PROJECT_SYSROOT_BUILD_DIR=$PROJECT_SYSROOT_DIR/build
+export PROJECT_SYSROOT_STAGING_DIR=$PROJECT_SYSROOT_DIR/staging
+export PROJECT_SYSROOT_RELEASE_DIR=$PROJECT_SYSROOT_DIR/release
+export PROJECT_SYSROOT_TOOLCHAIN_DIR=$PROJECT_SYSROOT_DIR/toolchain
+make_dir $PROJECT_SYSROOT_BUILD_DIR
+make_dir $PROJECT_SYSROOT_STAGING_DIR
+make_dir $PROJECT_SYSROOT_RELEASE_DIR
+make_dir $PROJECT_SYSROOT_TOOLCHAIN_DIR
 
 # export the common system directories
 ARTIFACT_DIR=${PROJECT_ROOT}/_artifact

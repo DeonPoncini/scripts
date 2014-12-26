@@ -12,7 +12,7 @@ fi
 source ${PROJECT_SCRIPT_DIR}/include/common.sh
 
 VALID_OPTIONS="cmake|clean|uninstall|help"
-VALID_TARGETS="linux-64"
+VALID_TARGETS="linux-64|android"
 VALID_BUILDS="debug|release"
 VALID_PROJECTS="all"
 
@@ -30,6 +30,18 @@ IFS='|' read -a ARRAY_OPTIONS <<< "$VALID_OPTIONS"
 IFS='|' read -a ARRAY_TARGETS <<< "$VALID_TARGETS"
 IFS='|' read -a ARRAY_BUILDS <<< "$VALID_BUILDS"
 IFS='|' read -a ARRAY_PROJECTS <<< "$VALID_PROJECTS"
+
+# map of what platforms have shared or static libraries
+declare -A TARGET_SHARED_MAP=(
+    ["linux-64"]="ON"
+    ["android"]="OFF"
+)
+
+# map of cross compile targets
+declare -A TARGET_CROSS_MAP=(
+    ["linux-64"]="false"
+    ["android"]="true"
+)
 
 ################################################################################
 # print usage
@@ -210,7 +222,9 @@ for b in "${BUILD_BUILDS[@]}" ; do
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=${b^}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_PATH=${BUILD_PATH}"
         CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}"
-        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_SHARED_LIBS=ON"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_SHARED_LIBS=${TARGET_SHARED_MAP["$t"]}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCMAKE_CROSSCOMPILING=${TARGET_CROSS_MAP["$t"]}"
+        CMAKE_OPTIONS="${CMAKE_OPTIONS} -DCROSS_TARGET=$t"
 
         CMAKE_PROJECTS=""
         if [ $(list_contains "all" ${BUILD_PROJECTS[@]}) = false ] ; then

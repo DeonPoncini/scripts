@@ -8,11 +8,13 @@
 #  SQLITE3_FOUND, If false, do not try to use SQLite3.
 
 find_path(SQLITE3_INCLUDE_DIR sqlite3.h
-    /usr/include)
+    ${COMMON_PATH}/include
+    NO_DEFAULT_PATH)
 
 find_library(SQLITE3_LIBRARY
-    NAMES libsqlite3.so
-    PATHS /usr/lib/x86_64-linux-gnu )
+    NAMES libsqlite3.so libsqlite3.a
+    PATHS ${TARGET_PATH}/lib
+    NO_DEFAULT_PATH )
 
 set(SQLITE3_LIBRARIES
     ${SQLITE3_LIBRARY})

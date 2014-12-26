@@ -1,0 +1,28 @@
+# Use the clang compiler on the system
+
+set(TOOLCHAIN_PATH $ENV{PROJECT_SYSROOT_TOOLCHAIN_DIR})
+set(ANDROID_C_COMPILER
+    "${TOOLCHAIN_PATH}/android/ndk/bin/clang")
+set(ANDROID_CXX_COMPILER
+    "${TOOLCHAIN_PATH}/android/ndk/bin/clang++")
+set(CROSS_COMPILE_FLAGS "-target armv7-none-linux-androideabi")
+
+set(CMAKE_SYSTEM_NAME "Linux")
+set(CMAKE_C_COMPILER "${ANDROID_C_COMPILER}")
+set(CMAKE_CXX_COMPILER "${ANDROID_CXX_COMPILER}")
+
+set(CMAKE_C_FLAGS "${CROSS_COMPILE_FLAGS} -DANDROID ${CMAKE_C_FLAGS}"
+    CACHE STRING "TOOLCHAIN_C_FLAGS")
+set(CMAKE_CXX_FLAGS "${CROSS_COMPILE_FLAGS} -DANDROID ${CMAKE_CXX_FLAGS}"
+    CACHE STRING "TOOLCHAIN_CXX_FLAGS")
+
+# for OpenCV
+set(ANDROID TRUE)
+set(ANDROID_NDK_ABI_NAME armeabi_v7a)
+
+include(CMakeForceCompiler)
+CMAKE_FORCE_C_COMPILER(${ANDROID_C_COMPILER} GNU)
+CMAKE_FORCE_CXX_COMPILER(${ANDROID_CXX_COMPILER} GNU)
+
+set(CMAKE_CXX_ARCHIVE_CREATE "${TOOLCHAIN_PATH}/android/ndk/bin/arm-linux-androideabi-ar <LINK_FLAGS> cr <TARGET> <OBJECTS>")
+set(CMAKE_RANLIB "${TOOLCHAIN_PATH}/android/ndk/bin/arm-linux-androideabi-ranlib <TARGET>")
