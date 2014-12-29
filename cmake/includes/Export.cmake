@@ -141,3 +141,67 @@ function(export_project)
     )
 
 endfunction()
+
+###############################################################################
+# Function to install a java project to the install directory
+#
+# Listed contents are installed to CMAKE_INSTALL_PREFIX/{lib|bin|include}
+# Generated <name>Config.cmake installed to CMAKE_PREFIX_PATH/lib/cmake
+#
+# Usage:
+# function(NAME JARS JAR_PATHS APKS)
+# NAME: single string value indicating the project name, should match the value
+#       given to the project() command in the CMakeLists.txt
+# JARS: paths to Java JAR files that need to be installed
+# JAR_PATHS: directories containg jars that wish to be exposed to other
+#       projects
+# APKS: list of Android APK files that need to be installed
+#
+###############################################################################
+function(export_java_project)
+    set(options )
+    set(oneValueArgs NAME)
+    set(multiValueArgs JARS JAR_PATHS APKS)
+    cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
+        "${multiValueArgs}" ${ARGN})
+
+    # sanity checking
+    if ("${EXP_NAME}" STREQUAL "")
+        message(FATAL_ERROR "Set NAME parameter to the project name")
+    endif()
+
+    # copy Java/Android targets
+    if(EXP_JARS)
+        install(
+            FILES
+                ${EXP_JARS}
+            DESTINATION
+                ${CMAKE_INSTALL_PREFIX}/jar
+        )
+    endif()
+
+    if(EXP_APKS)
+        install(
+            FILES
+                ${EXP_APKS}
+            DESTINATION
+                ${CMAKE_INSTALL_PREFIX}/apk
+        )
+    endif()
+
+    string(TOUPPER ${EXP_NAME} EXP_NAME_uc)
+
+    # export jar files
+    if (EXP_JAR_PATHS)
+        set(export_location ${CMAKE_PREFIX_PATH}/lib/cmake/${EXP_NAME})
+        set(export_config ${export_location}/${EXP_NAME}Config.cmake)
+        make_directory(${export_location})
+
+        file(WRITE ${export_config} "set(${EXP_NAME_uc}_JARS \"\")\n")
+        foreach(j ${EXP_JAR_PATHS})
+            file(APPEND ${export_config}
+                "list(APPEND ${EXP_NAME_uc}_JARS ${j})\n")
+        endforeach()
+    endif()
+
+endfunction()
