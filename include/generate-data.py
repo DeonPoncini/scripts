@@ -54,8 +54,10 @@ class Structure:
 
 def write_cpp(packageObjs, enumObjs, constantObjs, structObjs, \
         outPath, fileName):
-    outfile = codecs.open(os.path.join(outPath, 'cpp', fileName + '.h'),
-            'w', 'utf-8')
+    fullPath = os.path.join(outPath, 'cpp')
+    if not os.path.exists(fullPath):
+        os.makedirs(fullPath)
+    outfile = codecs.open(os.path.join(fullPath, fileName + '.h'), 'w', 'utf-8')
     guard=""
     for n in packageObj.ns:
         guard = guard + n.upper() + '_'
@@ -95,8 +97,10 @@ def write_cpp(packageObjs, enumObjs, constantObjs, structObjs, \
     outfile.write('#endif\n')
 
 def write_c(packageObjs, enumObjs, constantObjs, structObjs, outPath, fileName):
-    outfile = codecs.open(os.path.join(outPath, 'c', fileName + '.h'),
-            'w', 'utf-8')
+    fullPath = os.path.join(outPath, 'c')
+    if not os.path.exists(fullPath):
+        os.makedirs(fullPath)
+    outfile = codecs.open(os.path.join(fullPath, fileName + '.h'), 'w', 'utf-8')
     guard=""
     for n in packageObj.ns:
         guard = guard + n.upper() + '_'
@@ -148,7 +152,8 @@ def write_java(packageObjs, enumObjs, constantObjs, structObjs, \
     fullPath = os.path.join(outPath,'java', *paths)
     if not os.path.exists(fullPath):
         os.makedirs(fullPath)
-    outfile = codecs.open(os.path.join(fullPath, fileName + '.java'), 'w', 'utf-8')
+    outfile = codecs.open(os.path.join(fullPath, fileName + '.java'),
+            'w', 'utf-8')
 
     packageName = ''
     for p in paths:
