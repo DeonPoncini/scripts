@@ -80,7 +80,7 @@ def write_cpp(packageObjs, enumObjs, constantObjs, structObjs, \
 
     # structs
     for s in structObjs:
-        outfile.write('struct ' + s.name + '{\n')
+        outfile.write('struct ' + s.name + ' {\n')
         for e in s.elements:
             if e.dataType in cpp_data_types:
                 outfile.write('\t' + cpp_data_types[e.dataType] + ' ' \
@@ -124,7 +124,7 @@ def write_c(packageObjs, enumObjs, constantObjs, structObjs, outPath, fileName):
 
     # structs
     for s in structObjs:
-        outfile.write('struct ' + nsprefix + s.name + '{\n')
+        outfile.write('struct ' + nsprefix + s.name + ' {\n')
         for e in s.elements:
             if e.dataType in c_data_types:
                 outfile.write('\t' + c_data_types[e.dataType] + ' ' \
@@ -137,6 +137,53 @@ def write_c(packageObjs, enumObjs, constantObjs, structObjs, outPath, fileName):
     outfile.write('}\n')
     outfile.write('#endif\n')
     outfile.write('#endif\n')
+
+def write_java(packageObjs, enumObjs, constantObjs, structObjs, \
+        outPath, fileName):
+    paths = packageObjs.uri.split(".")
+    paths.reverse()
+    for n in packageObj.ns:
+        paths.append(n)
+
+    fullPath = os.path.join(outPath,'java', *paths)
+    if not os.path.exists(fullPath):
+        os.makedirs(fullPath)
+    outfile = codecs.open(os.path.join(fullPath, fileName + '.java'), 'w', 'utf-8')
+
+    packageName = ''
+    for p in paths:
+        packageName = packageName + p + '.'
+    packageName = packageName[:-1]
+    outfile.write('package ' + packageName + ';\n')
+
+    # outer class
+    outfile.write('public class ' + fileName + ' {\n')
+
+    # enumerations
+    for e in enumObjs:
+        outfile.write('public enum ' + e.name + ' {\n')
+        for entry in e.entries:
+            outfile.write('\t' + entry + ',\n')
+        outfile.write('}\n')
+
+    # constants
+    for c in constantObjs:
+        outfile.write('public static final ' + java_data_types[c.dataType] + \
+                ' ' + c.name + ' = ' + c.value + ';\n')
+
+    # structs
+    for s in structObjs:
+        outfile.write('public static class ' + s.name + '{\n')
+        for e in s.elements:
+            if e.dataType in java_data_types:
+                outfile.write('\tpublic ' + java_data_types[e.dataType] + ' ' \
+                        + e.name + ';\n')
+            else:
+                outfile.write('\tpublic ' + e.dataType + ' ' + e.name + ';\n')
+        outfile.write('}\n')
+
+    # close class
+    outfile.write('}\n')
 
 if len(sys.argv) < 3:
     print "Usage is: " + sys.argv[0] + " <data.xml> <outpath> "
@@ -202,3 +249,4 @@ for s in structs:
 
 write_cpp(packageObj, enumObjs, constantObjs, structObjs, outPath, fileName)
 write_c(packageObj, enumObjs, constantObjs, structObjs, outPath, fileName)
+write_java(packageObj, enumObjs, constantObjs, structObjs, outPath, fileName)
