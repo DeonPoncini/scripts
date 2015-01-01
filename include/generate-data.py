@@ -116,10 +116,10 @@ def write_c(packageObjs, enumObjs, constantObjs, structObjs, outPath, fileName):
 
     # enumerations
     for e in enumObjs:
-        outfile.write('enum ' + nsprefix + e.name + ' {\n')
+        outfile.write('typedef enum {\n')
         for entry in e.entries:
             outfile.write('\t' + nsprefix + e.name + '_' + entry + ',\n')
-        outfile.write('};\n')
+        outfile.write('} ' + nsprefix + e.name + ';\n')
 
     # constants
     for c in constantObjs:
@@ -128,14 +128,14 @@ def write_c(packageObjs, enumObjs, constantObjs, structObjs, outPath, fileName):
 
     # structs
     for s in structObjs:
-        outfile.write('struct ' + nsprefix + s.name + ' {\n')
+        outfile.write('typedef struct {\n')
         for e in s.elements:
             if e.dataType in c_data_types:
                 outfile.write('\t' + c_data_types[e.dataType] + ' ' \
                         + e.name + ';\n')
             else:
                 outfile.write('\t' + nsprefix + e.dataType + ' ' + e.name + ';\n')
-        outfile.write('};\n')
+        outfile.write('} ' + nsprefix + s.name + ';\n')
 
     outfile.write('#ifdef __cplusplus\n')
     outfile.write('}\n')
