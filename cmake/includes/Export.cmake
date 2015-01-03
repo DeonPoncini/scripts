@@ -161,7 +161,7 @@ endfunction()
 function(export_java_project)
     set(options )
     set(oneValueArgs NAME)
-    set(multiValueArgs JARS JAR_PATHS APKS)
+    set(multiValueArgs JARS JAR_PATHS INCLUDES APKS)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
@@ -209,6 +209,14 @@ function(export_java_project)
         foreach(j ${EXP_JAR_PATHS})
             file(APPEND ${export_config}
                 "list(APPEND ${EXP_NAME_uc}_JAR_PATHS ${j})\n")
+        endforeach()
+    endif()
+
+    if (EXP_INCLUDES)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_INCLUDES \"\")\n")
+        foreach(j ${EXP_INCLUDES})
+            file(APPEND ${export_config}
+                "list(APPEND ${EXP_NAME_uc}_INCLUDES ${j})\n")
         endforeach()
     endif()
 
