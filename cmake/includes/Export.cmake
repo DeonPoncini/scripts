@@ -170,8 +170,22 @@ function(export_java_project)
         message(FATAL_ERROR "Set NAME parameter to the project name")
     endif()
 
+    string(TOUPPER ${EXP_NAME} EXP_NAME_uc)
+
+    set(export_file "${CMAKE_CURRENT_BINARY_DIR}/${EXP_NAME}Targets.cmake")
+    set(export_location ${CMAKE_PREFIX_PATH}/lib/cmake/${EXP_NAME})
+    set(export_config ${export_location}/${EXP_NAME}Config.cmake)
+    make_directory(${export_location})
+    file(WRITE ${export_config} "\n")
+
     # copy Java/Android targets
     if(EXP_JARS)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_JARS \"\")\n")
+        foreach(j ${EXP_JARS})
+            file(APPEND ${export_config}
+                "list(APPEND ${EXP_NAME_uc}_JARS ${j})\n")
+        endforeach()
+
         install(
             FILES
                 ${EXP_JARS}
@@ -189,18 +203,12 @@ function(export_java_project)
         )
     endif()
 
-    string(TOUPPER ${EXP_NAME} EXP_NAME_uc)
-
     # export jar files
     if (EXP_JAR_PATHS)
-        set(export_location ${CMAKE_PREFIX_PATH}/lib/cmake/${EXP_NAME})
-        set(export_config ${export_location}/${EXP_NAME}Config.cmake)
-        make_directory(${export_location})
-
-        file(WRITE ${export_config} "set(${EXP_NAME_uc}_JARS \"\")\n")
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_JAR_PATHS \"\")\n")
         foreach(j ${EXP_JAR_PATHS})
             file(APPEND ${export_config}
-                "list(APPEND ${EXP_NAME_uc}_JARS ${j})\n")
+                "list(APPEND ${EXP_NAME_uc}_JAR_PATHS ${j})\n")
         endforeach()
     endif()
 
