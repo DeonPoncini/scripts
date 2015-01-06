@@ -41,12 +41,10 @@ import os ;
 local ToolchainDir = [ os.environ PROJECT_SYSROOT_TOOLCHAIN_DIR ] ;
 
 # --------------------------------------------------------------------
-using clang : androidR9d
+using gcc : androidR9d
 :
-$(ToolchainDir)/android/ndk/bin/clang++
+$(ToolchainDir)/android/ndk/bin/arm-linux-androideabi-g++
 :
-<compileflags>-target
-<compileflags>armv7-none-linux-androideabi
 <compileflags>-nostdinc
 <compileflags>-fexceptions
 <compileflags>-frtti
@@ -73,7 +71,9 @@ $(ToolchainDir)/android/ndk/bin/clang++
 <compileflags>-O2
 <compileflags>-std=c++11
 <compileflags>-I$(ToolchainDir)/android/ndk/include/c++/4.8
-<compileflags>-I$(ToolchainDir)/android/ndk/lib/clang/3.5/include
+<compileflags>-I$(ToolchainDir)/android/ndk/include/c++/4.8/arm-linux-androideabi
+<compileflags>-I$(ToolchainDir)/android/ndk/include/c++/4.8/arm-linux-androideabi
+<compileflags>-I$(ToolchainDir)/android/ndk/lib/gcc/arm-linux-androideabi/4.8/include
 <compileflags>-Wno-self-assign
 <architecture>arm
 <compileflags>-fvisibility=hidden

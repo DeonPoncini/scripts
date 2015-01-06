@@ -49,7 +49,7 @@ check_error $? "failed to apply android patch, aborting..."
 $BOOST_EXTRACT_PATH/bootstrap.sh --prefix=$build_dir
 check_error $? "bootstrap failed, aborting..."
 $BOOST_EXTRACT_PATH/bjam -q      \
-    toolset=clang                \
+    toolset=gcc                  \
     --without-context --without-coroutine --without-python \
     link=static                  \
     threading=multi              \
