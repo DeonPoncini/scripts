@@ -52,8 +52,9 @@ def dependencies(projectMap):
 
 # make the dependencies of all child projects dependencies of the main project
 def child_deps(projectMap, deps):
-    childList = []
+    childMap = {}
     for p in projectMap:
+        childList = []
         cmakePath = projectMap[p]
         if os.path.isfile(cmakePath):
             makelist = codecs.open(cmakePath, 'r', 'utf-8').read()
@@ -79,9 +80,10 @@ def child_deps(projectMap, deps):
                         # don't allow parents to be dependencies of themselves
                         if c != p:
                             deps[p].append(c)
+            childMap[p] = childList
         # unique dependencies
         deps[p] = list(set(deps[p]))
-    return childList
+    return childMap
 
 def filter_deps(name, deps, projectMap, filtered):
     for k in deps[name]:
@@ -141,7 +143,7 @@ for root, dirnames, filenames in os.walk(projectroot):
             cmakePath = os.path.join(root, filename)
             projects(cmakePath, projectMap)
 deps = dependencies(projectMap)
-childList = child_deps(projectMap, deps)
+childMap = child_deps(projectMap, deps)
 
 manifestDom = minidom.parse(manifestFile)
 projectList = manifestDom.getElementsByTagName('project')
@@ -158,9 +160,19 @@ for k in deps:
         filtered_deps[k] = deps[k]
 sortedlist = toposort(filtered_deps)
 # remove any children from the sorted list
-for c in childList:
-    if c in sortedlist:
-        sortedlist.remove(c)
+for p in childMap:
+    for c in childMap[p]:
+        if c in sortedlist:
+            if not p in sortedlist:
+                # replace a child with its parent
+                sortedlist[sortedlist.index(c)] = p
+            else:
+                sortedlist.remove(c)
+# remove any parents that are children
+for p in childMap:
+    for c in childMap[p]:
+        if c in sortedlist:
+            sortedlist.remove(c)
 
 outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
 
