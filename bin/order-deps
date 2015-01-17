@@ -14,25 +14,82 @@ import sys
 
 from xml.dom import minidom
 
+# fill the project list
+def projects(cmakePath, projectMap):
+    makelist = codecs.open(cmakePath, 'r', 'utf-8').read()
+    # project<whitespace>(<whitespace>[NAME]<whitespace|)>)
+    pattern = re.compile(r"^\s*project\s*\(\s*?(.*?)[\s)]", re.MULTILINE)
+    for match in re.findall(pattern, makelist):
+        projectMap[match] = cmakePath
+
+# get a project name from cmake path
+def name_from_path(projectMap, cmakePath):
+    if cmakePath in projectMap.values():
+        return projectMap.keys()[projectMap.values().index(cmakePath)]
+    return None
+
 # figure out what packages depend on what others
-def dependencies(projectroot, projectlist):
+def dependencies(projectMap):
     dependmap = {}
-    for p in projectlist:
-        makelist = codecs.open(projectroot + "/" + str(p) + "/CMakeLists.txt", \
-                'r', 'utf-8').read()
-        dependmap[p] = []
-        # dependent packages are listed
-        # find_package<whitespace>(<whitespace>[NAME]<whitespace|)>)
-        pattern = re.compile(r"find_package\s*\(\s*?(.*?)[\s)]")
-        for match in re.findall(pattern, makelist):
-            dependmap[p].append(match)
+    for p in projectMap:
+        cmakePath = projectMap[p]
+        if os.path.isfile(cmakePath):
+            makelist = codecs.open(cmakePath, 'r', 'utf-8').read()
+            dependmap[p] = []
+            # dependent packages are listed
+            # find_package<whitespace>(<whitespace>[NAME]<whitespace|)>)
+            pattern = re.compile(r"^\s*find_package\s*\(\s*?(.*?)[\s)]", \
+                    re.MULTILINE)
+            for match in re.findall(pattern, makelist):
+                dependmap[p].append(match)
     # strip out dependencies that aren't in the project list
     dependcopy = copy.deepcopy(dependmap)
     for k, v in dependcopy.items():
         for v1 in v:
-            if not v1 in projectlist:
+            if not v1 in projectMap:
                 dependmap[k].remove(v1)
     return dependmap
+
+# make the dependencies of all child projects dependencies of the main project
+def child_deps(projectMap, deps):
+    childMap = {}
+    for p in projectMap:
+        childList = []
+        cmakePath = projectMap[p]
+        if os.path.isfile(cmakePath):
+            makelist = codecs.open(cmakePath, 'r', 'utf-8').read()
+            # dependent packages are listed
+            # add_subdirectory<whitespace>(<whitespace>[NAME]<whitespace|)>)
+            pattern = re.compile(r"^\s*add_subdirectory\s*\(\s*?(.*?)[\s)]", \
+                    re.MULTILINE)
+            for match in re.findall(pattern, makelist):
+                # remove parent directories and variable defined directories
+                if match.startswith(".."):
+                    continue
+                if match.startswith("${"):
+                    continue
+                # find the project name of the child path
+                childCmakePath = os.path.join(os.path.dirname(cmakePath), \
+                        match, "CMakeLists.txt")
+                # add the dependencies of child as dependencies of their parents
+                childName = name_from_path(projectMap, childCmakePath)
+                if childName:
+                    childList.append(childName)
+                    cdeps = deps[childName]
+                    for c in cdeps:
+                        # don't allow parents to be dependencies of themselves
+                        if c != p:
+                            deps[p].append(c)
+            childMap[p] = childList
+        # unique dependencies
+        deps[p] = list(set(deps[p]))
+    return childMap
+
+def filter_deps(name, deps, projectMap, filtered):
+    for k in deps[name]:
+        if k:
+            filter_deps(k, deps, projectMap, filtered)
+    filtered.append(name)
 
 def toposort(dependmap):
     # set of nodes with no incoming edges on the graph
@@ -77,28 +134,53 @@ if not manifestFile:
 if not outputPath:
     sys.exit(-1)
 
-outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
+# map of project name to its CMakeLists.txt file
+projectMap = {}
+# find all CMakeLists under Project Root
+for root, dirnames, filenames in os.walk(projectroot):
+    for filename in filenames:
+        if filename == "CMakeLists.txt":
+            cmakePath = os.path.join(root, filename)
+            projects(cmakePath, projectMap)
+deps = dependencies(projectMap)
+childMap = child_deps(projectMap, deps)
 
 manifestDom = minidom.parse(manifestFile)
-remoteList = manifestDom.getElementsByTagName('remote')
-
-remotes = {} # dictionary mapping name to fetch
-for r in remoteList:
-    remotes[r.attributes['name'].value] = r.attributes['fetch'].value
-
 projectList = manifestDom.getElementsByTagName('project')
+
+filtered = []
+for project in projectList:
+    projectPath = os.path.join(projectroot, \
+            project.attributes['path'].value, "CMakeLists.txt")
+    projectName = name_from_path(projectMap, projectPath)
+    filter_deps(projectName, deps, projectMap, filtered)
+filtered_deps = {}
+for k in deps:
+    if k in filtered:
+        filtered_deps[k] = deps[k]
+sortedlist = toposort(filtered_deps)
+# remove any children from the sorted list
+for p in childMap:
+    for c in childMap[p]:
+        if c in sortedlist:
+            if not p in sortedlist:
+                # replace a child with its parent
+                sortedlist[sortedlist.index(c)] = p
+            else:
+                sortedlist.remove(c)
+# remove any parents that are children
+for p in childMap:
+    for c in childMap[p]:
+        if c in sortedlist:
+            sortedlist.remove(c)
+
+outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
 
 # put the projects into a list
 outputCmake.write("cmake_minimum_required(VERSION 2.8)\n")
-cmakeSubDirList = []
-for p in projectList:
-    # add subdirectories for cmake
-    cmakeSubDirList.append(p.attributes['path'].value)
 
 # we need to topologically sort our dependency graph for cmake
 # this ensures the add_subdirectories are done the right way
-deps = dependencies(projectroot, cmakeSubDirList)
-sortedlist = toposort(deps)
 for p in sortedlist:
-    outputCmake.write("add_subdirectory(" + projectroot + "/" + p + \
-            " ${BUILD_PATH}/" + p + ")\n")
+    outputCmake.write("add_subdirectory(" + os.path.dirname(projectMap[p]) + \
+            " " + os.path.join("${BUILD_PATH}", p) + ")\n")
