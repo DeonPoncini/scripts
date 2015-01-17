@@ -16,13 +16,12 @@ set(BOOST_LIBRARYDIR ${TARGET_PATH}/lib)
 list(APPEND CMAKE_MODULE_PATH "$ENV{PROJECT_SCRIPT_DIR}/cmake/modules")
 
 include("$ENV{PROJECT_SCRIPT_DIR}/cmake/includes/Export.cmake")
+include("$ENV{PROJECT_SCRIPT_DIR}/cmake/includes/UnitTest.cmake")
 include("$ENV{PROJECT_SCRIPT_DIR}/cmake/includes/Utils.cmake")
 
 # set C++ flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
-# target for running tests
-add_custom_target(check)
-
 # import the generated cmake file
 add_subdirectory($ENV{PROJECT_CODEGEN_DIR} ${CMAKE_PREFIX_PATH}/build)
+

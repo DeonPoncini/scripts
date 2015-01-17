@@ -86,8 +86,8 @@ function build {
     fi
 
     if [ "$cmake_projects" = "all" ] ; then
-        echo "making all"
         pushd ${build_dir} >> /dev/null
+        echo "make ${make_opts}"
         make ${make_opts}
         check_error $? "make failed, aborting..."
         popd >> /dev/null
@@ -96,6 +96,7 @@ function build {
         for p in "${cmake_projects[@]}" ; do
             echo "making ${p}"
             pushd ${build_dir} >> /dev/null
+            echo "make ${make_opts} ${p}"
             make ${make_opts} ${p}
             check_error $? "make ${p} failed, aborting..."
             popd >> /dev/null

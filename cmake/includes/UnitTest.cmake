@@ -24,11 +24,11 @@ macro(add_unit_tests)
     enable_testing()
 
     if (CMAKE_CONFIGURATION_TYPES)
-        add_custom_target(check_${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
+        add_custom_target(check-${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
             --force-new-ctest-process --output-on-failure --verbose
             --build-config "$<CONFIGURATION>")
     else()
-        add_custom_target(check_${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
+        add_custom_target(check-${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
             --force-new-ctest-process --output-on-failure --verbose)
     endif()
 
@@ -47,7 +47,7 @@ macro(add_unit_tests)
     endif()
 
     add_test(${TEST_NAME}-test test/${TEST_NAME}-test)
-    add_dependencies(check_${TEST_NAME} ${TEST_NAME}-test)
-    add_dependencies(check check_${TEST_NAME})
+    add_dependencies(check-${TEST_NAME} ${TEST_NAME}-test)
+    add_dependencies(check check-${TEST_NAME})
 
 endmacro()

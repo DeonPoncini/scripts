@@ -179,6 +179,9 @@ outputCmake = codecs.open(outputPath + "/CMakeLists.txt", 'w', 'utf-8')
 # put the projects into a list
 outputCmake.write("cmake_minimum_required(VERSION 2.8)\n")
 
+# we need to add a target for running tests here so its in the correct
+# build directory, the cmake that calls this builds into system
+outputCmake.write("add_custom_target(check)\n")
 # we need to topologically sort our dependency graph for cmake
 # this ensures the add_subdirectories are done the right way
 for p in sortedlist:
