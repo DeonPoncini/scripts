@@ -11,7 +11,7 @@ fi
 
 source ${PROJECT_SCRIPT_DIR}/include/common.sh
 
-VALID_OPTIONS="cmake|clean|uninstall|help"
+VALID_OPTIONS="cmake|clean|uninstall|help|test|serial"
 VALID_TARGETS="linux-64|android"
 VALID_BUILDS="debug|release"
 VALID_PROJECTS="all"
@@ -76,10 +76,19 @@ function build {
         popd >> /dev/null
     fi
 
+    local make_opts=""
+    if [ $(list_contains test ${BUILD_OPTIONS[@]}) = true ] ; then
+        make_opts="${make_opts} check"
+    fi
+
+    if [ $(list_contains serial ${BUILD_OPTIONS[@]}) = true ] ; then
+        make_opts="${make_opts} -j8"
+    fi
+
     if [ "$cmake_projects" = "all" ] ; then
         echo "making all"
         pushd ${build_dir} >> /dev/null
-        make -j8
+        make ${make_opts}
         check_error $? "make failed, aborting..."
         popd >> /dev/null
     else
@@ -87,7 +96,7 @@ function build {
         for p in "${cmake_projects[@]}" ; do
             echo "making ${p}"
             pushd ${build_dir} >> /dev/null
-            make -j8 ${p}
+            make ${make_opts} ${p}
             check_error $? "make ${p} failed, aborting..."
             popd >> /dev/null
         done
