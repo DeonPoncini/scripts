@@ -17,6 +17,10 @@ macro(add_unit_tests)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_TEST_DYN_LINK")
+    find_package(Boost 1.55.0 COMPONENTS unit_test_framework REQUIRED)
+    include_directories(${Boost_INCLUDE_DIRS})
+
     if ("${TEST_NAME}" STREQUAL "")
         message(FATAL_ERROR "Set NAME parameter to the project name")
     endif()
@@ -42,11 +46,12 @@ macro(add_unit_tests)
     set_target_properties(${TEST_NAME}-test PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY test)
 
-    if (TEST_LIBRARIES)
-        target_link_libraries(${TEST_NAME}-test ${TEST_LIBRARIES})
-    endif()
+    target_link_libraries(${TEST_NAME}-test
+        ${Boost_LIBRARIES}
+        ${TEST_NAME}
+        ${TEST_LIBRARIES})
 
-    add_test(${TEST_NAME}-test test/${TEST_NAME}-test)
+    add_test(${TEST_NAME}-test test/${TEST_NAME}-test --log_level=all)
     add_dependencies(check-${TEST_NAME} ${TEST_NAME}-test)
     add_dependencies(check check-${TEST_NAME})
 
