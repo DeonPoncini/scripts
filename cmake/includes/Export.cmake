@@ -20,12 +20,16 @@ include(CMakeParseArguments)
 # BINS: list of target names, same values as the target named in
 #       add_executable
 # RES:  list of absolute paths to resource files
+# JARS: paths to Java JAR files that need to be installed
+# APKS: list of Android APK files that need to be installed
+# JAR_PATHS: directories containg jars that wish to be exposed to other
+#       projects
 #
 ###############################################################################
 function(export_project)
     set(options )
     set(oneValueArgs NAME VERSION)
-    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES)
+    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
@@ -85,7 +89,11 @@ function(export_project)
     )
 
     # write the config file
-    file(WRITE ${export_config} "include(${export_file})\n")
+    if (export_targets)
+        file(WRITE ${export_config} "include(${export_file})\n")
+    else()
+        file(WRITE ${export_config} "\n")
+    endif()
     # add includes
     if (EXP_INCLUDES)
         file(APPEND ${export_config}
@@ -127,66 +135,6 @@ function(export_project)
         )
     endif()
 
-    # write the version file
-    include(CMakePackageConfigHelpers)
-    write_basic_package_version_file(
-        "${export_location}/${EXP_NAME}ConfigVersion.cmake"
-        VERSION ${EXP_VERSION}
-        COMPATIBILITY AnyNewerVersion
-    )
-
-    # export all targets
-    message(STATUS "Exporting: ${export_targets}")
-    export(TARGETS ${export_targets}
-        APPEND FILE "${export_file}"
-    )
-
-    install(EXPORT ${EXP_NAME}Targets
-        FILE
-            ${EXP_NAME}Targets.cmake
-        DESTINATION
-            ${export_location}
-    )
-
-endfunction()
-
-###############################################################################
-# Function to install a java project to the install directory
-#
-# Listed contents are installed to CMAKE_INSTALL_PREFIX/{lib|bin|include}
-# Generated <name>Config.cmake installed to CMAKE_PREFIX_PATH/lib/cmake
-#
-# Usage:
-# function(NAME JARS JAR_PATHS APKS)
-# NAME: single string value indicating the project name, should match the value
-#       given to the project() command in the CMakeLists.txt
-# JARS: paths to Java JAR files that need to be installed
-# JAR_PATHS: directories containg jars that wish to be exposed to other
-#       projects
-# APKS: list of Android APK files that need to be installed
-#
-###############################################################################
-function(export_java_project)
-    set(options )
-    set(oneValueArgs NAME)
-    set(multiValueArgs JARS JAR_PATHS INCLUDES APKS)
-    cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
-        "${multiValueArgs}" ${ARGN})
-
-    # sanity checking
-    if ("${EXP_NAME}" STREQUAL "")
-        message(FATAL_ERROR "Set NAME parameter to the project name")
-    endif()
-
-    string(TOUPPER ${EXP_NAME} EXP_NAME_uc)
-
-    set(export_file "${CMAKE_CURRENT_BINARY_DIR}/${EXP_NAME}Targets.cmake")
-    set(export_location ${CMAKE_PREFIX_PATH}/lib/cmake/${EXP_NAME})
-    set(export_config ${export_location}/${EXP_NAME}Config.cmake)
-    make_directory(${export_location})
-    file(WRITE ${export_config} "\n")
-
-    # copy Java/Android targets
     if(EXP_JARS)
         file(APPEND ${export_config} "set(${EXP_NAME_uc}_JARS \"\")\n")
         foreach(j ${EXP_JARS})
@@ -220,12 +168,26 @@ function(export_java_project)
         endforeach()
     endif()
 
-    if (EXP_INCLUDES)
-        file(APPEND ${export_config} "set(${EXP_NAME_uc}_INCLUDES \"\")\n")
-        foreach(j ${EXP_INCLUDES})
-            file(APPEND ${export_config}
-                "list(APPEND ${EXP_NAME_uc}_INCLUDES ${j})\n")
-        endforeach()
-    endif()
+    # write the version file
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+        "${export_location}/${EXP_NAME}ConfigVersion.cmake"
+        VERSION ${EXP_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
 
+    # export all targets
+    if (export_targets)
+        message(STATUS "Exporting: ${export_targets}")
+        export(TARGETS ${export_targets}
+            APPEND FILE "${export_file}"
+        )
+
+        install(EXPORT ${EXP_NAME}Targets
+            FILE
+                ${EXP_NAME}Targets.cmake
+            DESTINATION
+                ${export_location}
+        )
+    endif()
 endfunction()
