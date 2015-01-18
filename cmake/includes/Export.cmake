@@ -24,12 +24,15 @@ include(CMakeParseArguments)
 # APKS: list of Android APK files that need to be installed
 # JAR_PATHS: directories containg jars that wish to be exposed to other
 #       projects
+# JAVA_INCLUDES: directories containing java files that wish to be exposed to
+#       other projects
 #
 ###############################################################################
 function(export_project)
     set(options )
     set(oneValueArgs NAME VERSION)
-    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS)
+    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS
+        JAVA_INCLUDES)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
@@ -134,7 +137,7 @@ function(export_project)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/res
         )
     endif()
-
+    # install jars
     if(EXP_JARS)
         file(APPEND ${export_config} "set(${EXP_NAME_uc}_JARS \"\")\n")
         foreach(j ${EXP_JARS})
@@ -149,7 +152,7 @@ function(export_project)
                 ${CMAKE_INSTALL_PREFIX}/jar
         )
     endif()
-
+    # install APKs
     if(EXP_APKS)
         install(
             FILES
@@ -158,13 +161,20 @@ function(export_project)
                 ${CMAKE_INSTALL_PREFIX}/apk
         )
     endif()
-
     # export jar files
     if (EXP_JAR_PATHS)
         file(APPEND ${export_config} "set(${EXP_NAME_uc}_JAR_PATHS \"\")\n")
         foreach(j ${EXP_JAR_PATHS})
             file(APPEND ${export_config}
                 "list(APPEND ${EXP_NAME_uc}_JAR_PATHS ${j})\n")
+        endforeach()
+    endif()
+    # export java includes
+    if (EXP_JAVA_INCLUDES)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_JAVA_INCLUDE_DIRS \"\")\n")
+        foreach(j ${EXP_JAVA_INCLUDES})
+            file(APPEND ${export_config}
+                "list(APPEND ${EXP_NAME_uc}_JAVA_INCLUDE_DIRS ${j})\n")
         endforeach()
     endif()
 
