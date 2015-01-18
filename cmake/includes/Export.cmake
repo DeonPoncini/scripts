@@ -19,12 +19,13 @@ include(CMakeParseArguments)
 #       add_library(name STATIC)
 # BINS: list of target names, same values as the target named in
 #       add_executable
+# RES:  list of absolute paths to resource files
 #
 ###############################################################################
 function(export_project)
     set(options )
     set(oneValueArgs NAME VERSION)
-    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS)
+    set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
@@ -117,6 +118,13 @@ function(export_project)
             file(APPEND ${export_config}
                 "list(APPEND ${EXP_NAME_uc}_BINARIES ${f})\n")
         endforeach()
+    endif()
+    # install resources
+    if(EXP_RES)
+        install(
+            FILES ${EXP_RES}
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/res
+        )
     endif()
 
     # write the version file
