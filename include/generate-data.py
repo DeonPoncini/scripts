@@ -202,7 +202,7 @@ def write_python(packageObjs, enumObjs, constantObjs, structObjs, \
     outfile.write('def enum(*sequential, **named):\n')
     outfile.write('\tenums = dict(zip(sequential, range(len(sequential))),')
     outfile.write('**named)\n')
-    outfile.write('\treverse = dict((value, key) for key, value in ')
+    outfile.write('\treverse = dict((key, value) for key, value in ')
     outfile.write('enums.iteritems())\n')
     outfile.write('\tenums[\'reverse_mapping\'] = reverse\n')
     outfile.write('\treturn type(\'Enum\', (), enums)\n')
