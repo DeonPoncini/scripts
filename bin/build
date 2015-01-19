@@ -19,6 +19,7 @@ VALID_PROJECTS="all"
 DEFAULT_TARGET="linux-64"
 DEFAULT_BUILD="debug"
 DEFAULT_PROJECT="all"
+DEFAULT_J=$(nproc)
 
 # read up the valid projects
 while read line
@@ -47,22 +48,24 @@ declare -A TARGET_CROSS_MAP=(
 # print usage
 ################################################################################
 function usage {
-    echo -e "Usage: build [-t] [-b] [-p] [-c] [${ARRAY_OPTIONS[@]}]\n"
+    echo -e "Usage: build [-t] [-b] [-p] [-c] [-j] [${ARRAY_OPTIONS[@]}]\n"
     echo -e "Runs cross platform cmake based builds"
     echo -e "Currently configured to build project ${PROJECT_NAME}\n"
     echo -e "To change project build:"
     echo -e "\texport\${PROJECT_NAME}=<project-name>"
     echo -e "\tsource scripts/open-project.sh\n"
-    echo -e "\t-t \t\t\tbuild for a specific target\tdefault [$DEFAULT_TARGET]\tvalid [${ARRAY_TARGETS[@]}]"
-    echo -e "\t-b \t\t\tset a specific build type\tdefault [$DEFAULT_BUILD]\t\tvalid [${ARRAY_BUILDS[@]}"
-    echo -e "\t-p \t\t\tbuild a specific project\tdefault [$DEFAULT_PROJECT]\t\tvalid [${ARRAY_PROJECTS[@]}]"
-    echo -e "\t-c \t\t\tbuild a particular make target"
-    echo -e "\tcmake\t\t\treread cmake file"
-    echo -e "\tclean\t\t\tclean current build target"
-    echo -e "\tuninstall\t\tuninstall current build target"
-    echo -e "\ttest\t\t\trun unit tests for current targets"
-    echo -e "\tserial\t\t\trun build in a single thread"
-    echo -e "\thelp\t\t\tprint this message"
+    echo -e "Options:"
+    echo -e "\t-t\t\tbuild for a specific target\tdefault [$DEFAULT_TARGET]\tvalid [${ARRAY_TARGETS[@]}]"
+    echo -e "\t-b\t\tset a specific build type\tdefault [$DEFAULT_BUILD]\t\tvalid [${ARRAY_BUILDS[@]}"
+    echo -e "\t-p\t\tbuild a specific project\tdefault [$DEFAULT_PROJECT]\t\tvalid [${ARRAY_PROJECTS[@]}]"
+    echo -e "\t-j\t\thow many make threads\t\tdefault [${DEFAULT_J}]"
+    echo -e "\t-c\t\tbuild a particular make target"
+    echo -e "\tcmake\t\treread cmake file"
+    echo -e "\tclean\t\tclean current build target"
+    echo -e "\tuninstall\tuninstall current build target"
+    echo -e "\ttest\t\trun unit tests for current targets"
+    echo -e "\tserial\t\trun build in a single thread"
+    echo -e "\thelp\t\tprint this message"
     exit 1
 }
 
@@ -72,14 +75,14 @@ function usage {
 # $2 cmake options
 # $3 cmake projects
 # $4 force cmake
-# $5 build specific target
+# $5 make options
 ################################################################################
 function build {
     local build_dir=$1
     local cmake_options=$2
     local cmake_projects=$3
     local force_cmake=$4
-    local specific_targets=$5
+    local make_options=$5
 
     # order the dependencies of the project manifest
     ${PROJECT_SCRIPT_DIR}/bin/order-deps
@@ -88,44 +91,28 @@ function build {
     # run cmake if we need to
     if [ ! -e ${build_dir}/CMakeCache.txt ] || [ -n "${force_cmake}" ] ; then
         pushd ${build_dir} >> /dev/null
+        echo "cmake -DCMAKE_EXPORT_COMPILE_COMMANDS='ON' ${cmake_options} $PROJECT_SCRIPT_DIR/cmake"
         cmake -DCMAKE_EXPORT_COMPILE_COMMANDS='ON' ${cmake_options} $PROJECT_SCRIPT_DIR/cmake
         check_error $? "cmake failed, aborting..."
         popd >> /dev/null
     fi
 
-    local make_opts=""
-    if [ $(list_contains test ${BUILD_OPTIONS[@]}) = true ] ; then
-        make_opts="${make_opts} check"
-    fi
-
-    if [ $(list_contains serial ${BUILD_OPTIONS[@]}) = false ] ; then
-        make_opts="${make_opts} -j8"
-    fi
-
-    if [ -n "$specific_targets" ]; then
+    if [ "$cmake_projects" = "all" ] ; then
         pushd ${build_dir} >> /dev/null
-        echo "make ${make_opts} ${specific_targets}"
-        make ${make_opts} ${specific_targets}
+        echo "make ${make_options}"
+        make ${make_options}
         check_error $? "make failed, aborting..."
         popd >> /dev/null
     else
-        if [ "$cmake_projects" = "all" ] ; then
+        IFS=' ' read -a cmake_projects <<< "${cmake_projects}"
+        for p in "${cmake_projects[@]}" ; do
+            echo "making ${p}"
             pushd ${build_dir} >> /dev/null
-            echo "make ${make_opts}"
-            make ${make_opts}
-            check_error $? "make failed, aborting..."
+            echo "make ${make_options} ${p}"
+            make ${make_options} ${p}
+            check_error $? "make ${p} failed, aborting..."
             popd >> /dev/null
-        else
-            IFS=' ' read -a cmake_projects <<< "${cmake_projects}"
-            for p in "${cmake_projects[@]}" ; do
-                echo "making ${p}"
-                pushd ${build_dir} >> /dev/null
-                echo "make ${make_opts} ${p}"
-                make ${make_opts} ${p}
-                check_error $? "make ${p} failed, aborting..."
-                popd >> /dev/null
-            done
-        fi
+        done
     fi
 
     # run make install
@@ -141,8 +128,9 @@ function build {
 BUILD_TARGETS=""
 BUILD_BUILDS=""
 BUILD_PROJECTS=""
+BUILD_J=""
 BUILD_EXTRA_TARGETS=""
-while getopts ":t:b:p:c:" o; do
+while getopts ":t:b:p:j:c:" o; do
     case "${o}" in
         t)
             BUILD_TARGETS="${BUILD_TARGETS}${OPTARG},"
@@ -152,6 +140,9 @@ while getopts ":t:b:p:c:" o; do
             ;;
         p)
             BUILD_PROJECTS="${BUILD_PROJECTS}${OPTARG},"
+            ;;
+        j)
+            BUILD_J="${OPTARG}"
             ;;
         c)
             BUILD_EXTRA_TARGETS="${BUILD_EXTRA_TARGETS}${OPTARG},"
@@ -170,6 +161,10 @@ fi
 
 if [ "${BUILD_BUILDS}" = "" ] ; then
     BUILD_BUILDS=$DEFAULT_BUILD
+fi
+
+if [ "${BUILD_J}" = "" ] ; then
+    BUILD_J=$DEFAULT_J
 fi
 
 if [ "${BUILD_PROJECTS}" = "" ] ; then
@@ -275,10 +270,24 @@ for b in "${BUILD_BUILDS[@]}" ; do
             CMAKE_PROJECTS="all"
         fi
 
+        # set up the make options
+        MAKE_OPTIONS=""
+        if [ $(list_contains test ${BUILD_OPTIONS[@]}) = true ] ; then
+            MAKE_OPTIONS="${MAKE_OPTIONS} check"
+        fi
+
+        if [ $(list_contains serial ${BUILD_OPTIONS[@]}) = false ] ; then
+            MAKE_OPTIONS="${MAKE_OPTIONS} -j${BUILD_J}"
+        fi
+
+        if [ -n "$BUILD_EXTRA_TARGETS" ] ; then
+            MAKE_OPTIONS="${MAKE_OPTIONS} ${BUILD_EXTRA_TARGETS}"
+        fi
+
         make_dir $BUILD_PATH
         make_dir $SYSTEM_PATH
         make_dir $INSTALL_PATH
 
-        build "${BUILD_PATH}" "${CMAKE_OPTIONS}" "${CMAKE_PROJECTS}" "${FORCE_CMAKE}" "${BUILD_EXTRA_TARGETS}"
+        build "${BUILD_PATH}" "${CMAKE_OPTIONS}" "${CMAKE_PROJECTS}" "${FORCE_CMAKE}" "${MAKE_OPTIONS}"
     done
 done
