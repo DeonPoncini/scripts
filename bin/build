@@ -11,7 +11,7 @@ fi
 
 source ${PROJECT_SCRIPT_DIR}/include/common.sh
 
-VALID_OPTIONS="cmake|clean|uninstall|help|test|serial"
+VALID_OPTIONS="cmake|clean|uninstall|test|serial|help"
 VALID_TARGETS="linux-64|android"
 VALID_BUILDS="debug|release"
 VALID_PROJECTS="all"
@@ -47,7 +47,22 @@ declare -A TARGET_CROSS_MAP=(
 # print usage
 ################################################################################
 function usage {
-    echo "Usage: build [-t $VALID_TARGETS] [-b $VALID_BUILDS] [-p $VALID_PROJECTS] [-c target] [$VALID_OPTIONS]"
+    echo -e "Usage: build [-t] [-b] [-p] [-c] [${ARRAY_OPTIONS[@]}]\n"
+    echo -e "Runs cross platform cmake based builds"
+    echo -e "Currently configured to build project ${PROJECT_NAME}\n"
+    echo -e "To change project build:"
+    echo -e "\texport\${PROJECT_NAME}=<project-name>"
+    echo -e "\tsource scripts/open-project.sh\n"
+    echo -e "\t-t \t\t\tbuild for a specific target\tdefault [$DEFAULT_TARGET]\tvalid [${ARRAY_TARGETS[@]}]"
+    echo -e "\t-b \t\t\tset a specific build type\tdefault [$DEFAULT_BUILD]\t\tvalid [${ARRAY_BUILDS[@]}"
+    echo -e "\t-p \t\t\tbuild a specific project\tdefault [$DEFAULT_PROJECT]\t\tvalid [${ARRAY_PROJECTS[@]}]"
+    echo -e "\t-c \t\t\tbuild a particular make target"
+    echo -e "\tcmake\t\t\treread cmake file"
+    echo -e "\tclean\t\t\tclean current build target"
+    echo -e "\tuninstall\t\tuninstall current build target"
+    echo -e "\ttest\t\t\trun unit tests for current targets"
+    echo -e "\tserial\t\t\trun build in a single thread"
+    echo -e "\thelp\t\t\tprint this message"
     exit 1
 }
 
