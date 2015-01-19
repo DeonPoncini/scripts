@@ -26,13 +26,15 @@ include(CMakeParseArguments)
 #       projects
 # JAVA_INCLUDES: directories containing java files that wish to be exposed to
 #       other projects
+# PYTHON_INCLUDES: directories containing python files that wish to be exposed
+#       to other projects
 #
 ###############################################################################
 function(export_project)
     set(options )
     set(oneValueArgs NAME VERSION)
     set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS
-        JAVA_INCLUDES)
+        JAVA_INCLUDES PYTHON_INCLUDES)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
         "${multiValueArgs}" ${ARGN})
 
@@ -175,6 +177,14 @@ function(export_project)
         foreach(j ${EXP_JAVA_INCLUDES})
             file(APPEND ${export_config}
                 "list(APPEND ${EXP_NAME_uc}_JAVA_INCLUDE_DIRS ${j})\n")
+        endforeach()
+    endif()
+    # export python includes
+    if (EXP_PYTHON_INCLUDES)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_PYTHON_INCLUDE_DIRS \"\")\n")
+        foreach(j ${EXP_PYTHON_INCLUDES})
+            file(APPEND ${export_config}
+                "list(APPEND ${EXP_NAME_uc}_PYTHON_INCLUDE_DIRS ${j})\n")
         endforeach()
     endif()
 
