@@ -20,6 +20,10 @@ def projects(cmakePath, projectMap):
     # project<whitespace>(<whitespace>[NAME]<whitespace|)>)
     pattern = re.compile(r"^\s*project\s*\(\s*?(.*?)[\s)]", re.MULTILINE)
     for match in re.findall(pattern, makelist):
+        if match in projectMap:
+            print "FATAL ERROR: Project " + match + " at " + makelist
+            print "Alredy exists at " + projectMap[match]
+            sys.exit(-1)
         projectMap[match] = cmakePath
 
 # get a project name from cmake path

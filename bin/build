@@ -86,7 +86,10 @@ function build {
 
     # order the dependencies of the project manifest
     ${PROJECT_SCRIPT_DIR}/bin/order-deps
-    check_error $? "dependency ordering failed, aborting..."
+    if [ $? != 0 ] ; then
+        echo "dependency ordering failed, aborting..."
+        exit -1
+    fi
 
     # run cmake if we need to
     if [ ! -e ${build_dir}/CMakeCache.txt ] || [ -n "${force_cmake}" ] ; then
