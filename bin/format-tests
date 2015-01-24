@@ -1,0 +1,66 @@
+#!/usr/bin/python
+
+################################################################################
+# format-tests
+# makes the output from boost test look a bit more attractive
+# prints out the unit tests with a simple OK or FAIL and colored
+################################################################################
+
+import re
+import sys
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+currentTestSuite = []
+currentTestCase = ""
+passed = True
+inTestCase=False
+
+while 1:
+    try:
+        line = raw_input()
+    except EOFError:
+        break;
+    if line.startswith("Entering test suite"):
+        cts = re.findall('"([^"]*)"', line)[0]
+        currentTestSuite.append(cts)
+    elif line.startswith("Leaving test suite"):
+        currentTestSuite.pop()
+    elif line.startswith("Entering test case"):
+        currentTestCase = re.findall('"([^"]*)"', line)[0]
+        passed=True
+        inTestCase=True
+    elif line.startswith("Leaving test case"):
+        if passed:
+            print bcolors.OKGREEN + "[OK]",
+            for t in currentTestSuite:
+                print "\t" + t,
+            print "\t" + currentTestCase,
+            print bcolors.ENDC
+        else:
+            print bcolors.FAIL + "[FAIL]",
+            for t in currentTestSuite:
+                print "\t" + t,
+            print "\t" + currentTestCase,
+            print bcolors.ENDC
+        inTestCase=False
+    else:
+        if inTestCase:
+            # check for failure
+            if "failed" in line:
+                if "error" in line:
+                    passed=False
+            elif line.endswith("passed"):
+                passed=passed
+            else:
+                print line
+        else:
+            print line

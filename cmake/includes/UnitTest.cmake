@@ -41,7 +41,8 @@ macro(add_unit_tests)
         ${TEST_LIBRARIES})
 
     add_custom_target(check-${TEST_NAME} COMMAND
-        test/${TEST_NAME}-test --log_level=all)
+        test/${TEST_NAME}-test --log_level=all |
+        $ENV{PROJECT_SCRIPT_DIR}/bin/format-tests)
     add_dependencies(${TEST_NAME}-test ${TEST_NAME})
     add_dependencies(check-${TEST_NAME} ${TEST_NAME}-test)
     add_dependencies(check check-${TEST_NAME})
