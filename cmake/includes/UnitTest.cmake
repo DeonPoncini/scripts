@@ -25,17 +25,6 @@ macro(add_unit_tests)
         message(FATAL_ERROR "Set NAME parameter to the project name")
     endif()
 
-    enable_testing()
-
-    if (CMAKE_CONFIGURATION_TYPES)
-        add_custom_target(check-${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
-            --force-new-ctest-process --output-on-failure --verbose
-            --build-config "$<CONFIGURATION>")
-    else()
-        add_custom_target(check-${TEST_NAME} COMMAND ${CMAKE_CTEST_COMMAND}
-            --force-new-ctest-process --output-on-failure --verbose)
-    endif()
-
     if (TEST_INCLUDES)
         include_directories(${TEST_INCLUDES})
     endif()
@@ -51,7 +40,9 @@ macro(add_unit_tests)
         ${TEST_NAME}
         ${TEST_LIBRARIES})
 
-    add_test(${TEST_NAME}-test test/${TEST_NAME}-test --log_level=all)
+    add_custom_target(check-${TEST_NAME} COMMAND
+        test/${TEST_NAME}-test --log_level=all)
+    add_dependencies(${TEST_NAME}-test ${TEST_NAME})
     add_dependencies(check-${TEST_NAME} ${TEST_NAME}-test)
     add_dependencies(check check-${TEST_NAME})
 
