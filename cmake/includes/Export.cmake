@@ -28,11 +28,13 @@ include(CMakeParseArguments)
 #       other projects
 # PYTHON_INCLUDES: directories containing python files that wish to be exposed
 #       to other projects
+# PATH: directory to any build time scripts that are useful for other projects
+#       to be able to run
 #
 ###############################################################################
 function(export_project)
     set(options )
-    set(oneValueArgs NAME VERSION)
+    set(oneValueArgs NAME VERSION PATH)
     set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS
         JAVA_INCLUDES PYTHON_INCLUDES)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
@@ -186,6 +188,9 @@ function(export_project)
             file(APPEND ${export_config}
                 "list(APPEND ${EXP_NAME_uc}_PYTHON_INCLUDE_DIRS ${j})\n")
         endforeach()
+    endif()
+    if (EXP_PATH)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_PATH ${EXP_PATH})\n")
     endif()
 
     # write the version file
