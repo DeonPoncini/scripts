@@ -30,11 +30,13 @@ include(CMakeParseArguments)
 #       to other projects
 # PATH: directory to any build time scripts that are useful for other projects
 #       to be able to run
+# DATA: directory to any data that is useful during build time for other
+#       projects
 #
 ###############################################################################
 function(export_project)
     set(options )
-    set(oneValueArgs NAME VERSION PATH)
+    set(oneValueArgs NAME VERSION PATH DATA)
     set(multiValueArgs INCLUDES LIBS ARCHIVES BINS RES JARS APKS JAR_PATHS
         JAVA_INCLUDES PYTHON_INCLUDES)
     cmake_parse_arguments(EXP "${options}" "${oneValueArgs}"
@@ -191,6 +193,9 @@ function(export_project)
     endif()
     if (EXP_PATH)
         file(APPEND ${export_config} "set(${EXP_NAME_uc}_PATH ${EXP_PATH})\n")
+    endif()
+    if (EXP_DATA)
+        file(APPEND ${export_config} "set(${EXP_NAME_uc}_DATA ${EXP_DATA})\n")
     endif()
 
     # write the version file
