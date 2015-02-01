@@ -156,8 +156,9 @@ filtered = []
 for project in projectList:
     projectPath = os.path.join(projectroot, \
             project.attributes['path'].value, "CMakeLists.txt")
-    projectName = name_from_path(projectMap, projectPath)
-    filter_deps(projectName, deps, projectMap, filtered)
+    if os.path.exists(projectPath):
+        projectName = name_from_path(projectMap, projectPath)
+        filter_deps(projectName, deps, projectMap, filtered)
 filtered_deps = {}
 for k in deps:
     if k in filtered:
